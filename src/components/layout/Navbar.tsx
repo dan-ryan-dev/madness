@@ -12,15 +12,19 @@ export async function Navbar() {
     let errorOccurred = false;
 
     try {
-        session = await auth();
-        if (session?.user?.id) {
-            const membership = await prisma.groupMembership.findFirst({
-                where: { userId: session.user.id },
-                orderBy: { joinedAt: 'asc' }
-            });
-            myGroupId = membership?.groupId;
+        if (!process.env.DATABASE_URL) {
+            console.warn("Navbar: DATABASE_URL missing, skipping DB query.");
+        } else {
+            session = await auth();
+            if (session?.user?.id) {
+                const membership = await prisma.groupMembership.findFirst({
+                    where: { userId: session.user.id },
+                    orderBy: { joinedAt: 'asc' }
+                });
+                myGroupId = membership?.groupId;
+            }
+            isAdmin = session?.user?.role === 'SUPER_ADMIN' || session?.user?.role === 'GROUP_ADMIN';
         }
-        isAdmin = session?.user?.role === 'SUPER_ADMIN' || session?.user?.role === 'GROUP_ADMIN';
     } catch (error) {
         console.error("Navbar Initialization Error:", error);
         errorOccurred = true;
