@@ -10,17 +10,25 @@ declare global {
     var prisma: undefined | ReturnType<typeof prismaClientSingleton>
 }
 
-// Lazy initialization to prevent crashes during build-time module imports
-const getPrisma = () => {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-        return null as any;
-    }
-    if (!globalThis.prisma) {
-        globalThis.prisma = prismaClientSingleton()
-    }
-    return globalThis.prisma
-}
+// Lazy Proxy to prevent ANY initialization during build-time module imports
+const prisma = new Proxy({} as ReturnType<typeof prismaClientSingleton>, {
+    get(target, prop, receiver) {
+        // Skip initialization if we're in the build phase
+        if (process.env.NEXT_PHASE === 'phase-production-build') {
+            console.warn(`Prisma: Blocked access to "${String(prop)}" during build phase.`);
+            return undefined;
+        }
 
-const prisma = getPrisma()
+        if (!globalThis.prisma) {
+            globalThis.prisma = prismaClientSingleton()
+        }
+
+        const value = Reflect.get(globalThis.prisma, prop, receiver);
+        if (typeof value === 'function') {
+            return value.bind(globalThis.prisma);
+        }
+        return value;
+    }
+});
 
 export default prisma
