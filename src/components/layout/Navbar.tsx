@@ -6,18 +6,25 @@ import prisma from '@/lib/prisma';
 import { Trophy, ChartBar, Shield, Star } from 'lucide-react';
 
 export async function Navbar() {
-    const session = await auth();
+    let session = null;
     let myGroupId = null;
+    let isAdmin = false;
+    let errorOccurred = false;
 
-    if (session?.user?.id) {
-        const membership = await prisma.groupMembership.findFirst({
-            where: { userId: session.user.id },
-            orderBy: { joinedAt: 'asc' }
-        });
-        myGroupId = membership?.groupId;
+    try {
+        session = await auth();
+        if (session?.user?.id) {
+            const membership = await prisma.groupMembership.findFirst({
+                where: { userId: session.user.id },
+                orderBy: { joinedAt: 'asc' }
+            });
+            myGroupId = membership?.groupId;
+        }
+        isAdmin = session?.user?.role === 'SUPER_ADMIN' || session?.user?.role === 'GROUP_ADMIN';
+    } catch (error) {
+        console.error("Navbar Initialization Error:", error);
+        errorOccurred = true;
     }
-
-    const isAdmin = session?.user?.role === 'SUPER_ADMIN' || session?.user?.role === 'GROUP_ADMIN';
 
     return (
         <nav className="bg-brand-blue text-white p-4 sticky top-0 z-50 shadow-md backdrop-blur-md bg-opacity-90">
@@ -58,6 +65,11 @@ export async function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {errorOccurred && (
+                        <div className="text-[10px] bg-red-500/20 text-red-200 px-2 py-0.5 rounded border border-red-500/30 animate-pulse font-bold">
+                            DB Error
+                        </div>
+                    )}
                     {/* Admin Link (Desktop) */}
                     {isAdmin && (
                         <Link
