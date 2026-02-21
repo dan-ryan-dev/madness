@@ -12,11 +12,14 @@ export async function Navbar() {
     let errorOccurred = false;
 
     try {
-        if (!process.env.DATABASE_URL) {
-            console.warn("Navbar: DATABASE_URL missing, skipping DB query.");
+        // Skip DB and Auth entirely during build time to prevent static generation crashes
+        const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || (!process.env.DATABASE_URL && process.env.VERCEL);
+
+        if (isBuildTime) {
+            console.log("Navbar: Skipping DB/Auth during build or if DATABASE_URL is missing.");
         } else {
             session = await auth();
-            if (session?.user?.id) {
+            if (session?.user?.id && process.env.DATABASE_URL) {
                 const membership = await prisma.groupMembership.findFirst({
                     where: { userId: session.user.id },
                     orderBy: { joinedAt: 'asc' }
