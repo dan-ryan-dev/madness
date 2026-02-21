@@ -6,9 +6,11 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { authConfig } from "./auth.config"
 import prisma from "@/lib/prisma"
 
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
-    adapter: PrismaAdapter(prisma) as any,
+    adapter: isBuildTime ? undefined : PrismaAdapter(prisma) as any,
     providers: [
         Nodemailer({
             server: {
