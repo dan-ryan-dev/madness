@@ -33,7 +33,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <div className="min-h-screen bg-brand-light flex flex-col font-sans">
-          {!isBuildTime && <Navbar />}
+          <Navbar />
           <main className="flex-grow container mx-auto p-4 md:p-6">
             {children}
           </main>
