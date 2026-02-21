@@ -23,13 +23,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <BaseLayout>{children}</BaseLayout>
+        <div className="min-h-screen bg-brand-light flex flex-col font-sans">
+          {!isBuildTime && <Navbar />}
+          <main className="flex-grow container mx-auto p-4 md:p-6">
+            {children}
+          </main>
+          <footer className="bg-brand-dark text-white p-4 text-center text-sm">
+            &copy; 2026 Madness Draft Pool
+          </footer>
+        </div>
       </body>
     </html>
   );
