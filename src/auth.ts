@@ -75,31 +75,50 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }),
     ],
     callbacks: {
-        async jwt({ token, user, trigger, session }) {
+        async jwt({ token, user, account, profile }) {
+            console.log("[Auth] JWT Callback Start", {
+                hasToken: !!token,
+                hasUser: !!user,
+                hasAccount: !!account,
+                email: token.email
+            });
+
             // Merge with Edge logic
             if (user) {
+                console.log("[Auth] User found in callback", { id: user.id, role: user.role });
                 token.role = user.role
                 token.id = user.id as string
             }
 
             // DB Check (Node only)
             if (!token.role && token.email) {
-                const dbUser = await prisma.user.findUnique({
-                    where: { email: token.email },
-                })
-                if (dbUser) {
-                    token.role = dbUser.role as "SUPER_ADMIN" | "GROUP_ADMIN" | "PLAYER"
-                    token.id = dbUser.id
+                try {
+                    console.log("[Auth] Falling back to DB for user role", { email: token.email });
+                    const dbUser = await prisma.user.findUnique({
+                        where: { email: token.email },
+                    })
+                    if (dbUser) {
+                        console.log("[Auth] User found in DB", { id: dbUser.id, role: dbUser.role });
+                        token.role = dbUser.role as "SUPER_ADMIN" | "GROUP_ADMIN" | "PLAYER"
+                        token.id = dbUser.id
+                    } else {
+                        console.warn("[Auth] User NOT found in DB");
+                    }
+                } catch (e) {
+                    console.error("[Auth] DB Check failed", e);
                 }
             }
 
+            console.log("[Auth] JWT Callback End", { id: token.id, role: token.role });
             return token
         },
         async session({ session, token }) {
+            console.log("[Auth] Session Callback Start", { hasToken: !!token });
             if (session.user) {
                 session.user.id = token.id as string
                 session.user.role = token.role as "SUPER_ADMIN" | "GROUP_ADMIN" | "PLAYER"
             }
+            console.log("[Auth] Session Callback End", { userId: session.user?.id });
             return session
         },
     },
