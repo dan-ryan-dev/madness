@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { importTeams } from "@/app/actions/tournament"
-import { Loader2, CheckCircle, AlertCircle, Eye, FileText } from "lucide-react"
+import { Loader2, CheckCircle, AlertCircle, Eye, FileText, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 export function BulkTeamImporter({ tournamentId }: { tournamentId: string }) {
     const [csvData, setCsvData] = useState("")
@@ -108,9 +109,18 @@ Example line: "Team Name, 1, East"`
             )}
 
             {success && (
-                <div className="bg-green-50 text-green-600 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                    {success}
+                <div className="bg-green-50 border border-green-100 p-6 rounded-xl animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-3 text-green-600 mb-4">
+                        <CheckCircle className="w-6 h-6 flex-shrink-0" />
+                        <span className="font-bold text-lg">{success}</span>
+                    </div>
+                    <Link
+                        href="/admin/tournaments"
+                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition-colors"
+                    >
+                        Back to Admin Dashboard
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
                 </div>
             )}
 
