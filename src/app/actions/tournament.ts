@@ -103,22 +103,14 @@ export async function importTeams(tournamentId: string, csvData: string) {
 
     try {
         await prisma.$transaction(async (tx) => {
-            // Optional: Clear existing teams?
-            // User didn't explicitly ask to clear, but "bulk load" usually implies setting state.
-            // Let's NOT clear by default to allow appending, OR we could clear. 
-            // "if one row is malformed... roll back... so you don't end up with a partial bracket" implies we want a consistent state.
-            // Let's assume we are initializing. Safe to deleteMany for this tournament if we want a clean import.
-            // But maybe they want to add in batches?
-            // "Fill the Bracket" implies full load.
-            // Let's just create for now.
-
-            // SQLite does not support createMany, so we use Promise.all
-            await Promise.all(teamsToCreate.map(team =>
-                tx.team.create({
+            // Sequential creates are much more stable for Transaction Poolers (PGBouncer)
+            // than Promise.all which can overwhelm the pinned connection.
+            for (const team of teamsToCreate) {
+                await tx.team.create({
                     data: team
-                })
-            ))
-        })
+                });
+            }
+        });
 
         revalidatePath(`/admin/tournaments/${tournamentId}`)
         return { success: true, message: `Successfully imported ${teamsToCreate.length} teams.` }
