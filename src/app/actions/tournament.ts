@@ -103,13 +103,22 @@ export async function importTeams(tournamentId: string, csvData: string) {
 
     try {
         await prisma.$transaction(async (tx) => {
-            // Sequential creates are much more stable for Transaction Poolers (PGBouncer)
-            // than Promise.all which can overwhelm the pinned connection.
+            // 1. Clear existing teams for this tournament to ensure a clean import
+            // and avoid unique constraint errors if re-running.
+            await tx.team.deleteMany({
+                where: { tournamentId }
+            });
+
+            // 2. Sequential creates for large brackets (64 teams)
+            // Sequential is safer for PGBouncer pinning than Promise.all.
             for (const team of teamsToCreate) {
                 await tx.team.create({
                     data: team
                 });
             }
+        }, {
+            maxWait: 10000,
+            timeout: 30000 // 30 seconds for 64 teams
         });
 
         revalidatePath(`/admin/tournaments/${tournamentId}`)
