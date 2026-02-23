@@ -1,8 +1,9 @@
 "use client"
 
 import { createGroupWithPlayers } from "@/app/actions/group"
-import { useActionState, useState } from "react"
-import { Users, Loader2, AlertCircle, Info, ExternalLink, CheckCircle2 } from "lucide-react"
+import { searchUsers } from "@/app/actions/admin"
+import { useActionState, useState, useEffect, useRef } from "react"
+import { Users, Loader2, AlertCircle, Info, ExternalLink, CheckCircle2, Search } from "lucide-react"
 import Link from "next/link"
 
 interface Tournament {
@@ -152,37 +153,7 @@ export function NewGroupForm({ tournaments }: { tournaments: Tournament[] }) {
 
                 <div className="space-y-4">
                     {Array.from({ length: 8 }).map((_, i) => (
-                        <div key={i} className="flex gap-4 items-start p-4 rounded-lg border bg-gray-50 border-gray-100">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-500 font-bold text-sm shrink-0 mt-1">
-                                {i + 1}
-                            </div>
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label htmlFor={`player_${i}_name`} className="block text-xs font-medium text-gray-500 mb-1">
-                                        Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name={`player_${i}_name`}
-                                        required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue"
-                                        placeholder="Player Name"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor={`player_${i}_email`} className="block text-xs font-medium text-gray-500 mb-1">
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        name={`player_${i}_email`}
-                                        required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue"
-                                        placeholder="player@example.com"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        <PlayerRow key={i} index={i} />
                     ))}
                 </div>
 
@@ -227,5 +198,104 @@ export function NewGroupForm({ tournaments }: { tournaments: Tournament[] }) {
                 </button>
             </div>
         </form>
+    )
+}
+
+function PlayerRow({ index }: { index: number }) {
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [searchResults, setSearchResults] = useState<{ id: string, name: string | null, email: string | null }[]>([])
+    const [isSearching, setIsSearching] = useState(false)
+    const [showResults, setShowResults] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowResults(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
+
+    const handleSearch = async (value: string) => {
+        setName(value)
+        if (value.length < 2) {
+            setSearchResults([])
+            setShowResults(false)
+            return
+        }
+
+        setIsSearching(true)
+        setShowResults(true)
+        const results = await searchUsers(value)
+        setSearchResults(results as any)
+        setIsSearching(false)
+    }
+
+    const selectUser = (user: { name: string | null, email: string | null }) => {
+        setName(user.name || "")
+        setEmail(user.email || "")
+        setShowResults(false)
+    }
+
+    return (
+        <div className="flex gap-4 items-start p-4 rounded-lg border bg-gray-50 border-gray-100">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-500 font-bold text-sm shrink-0 mt-1">
+                {index + 1}
+            </div>
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="relative" ref={dropdownRef}>
+                    <label htmlFor={`player_${index}_name`} className="block text-xs font-medium text-gray-500 mb-1 flex justify-between items-center">
+                        Name
+                        {isSearching && <Loader2 className="w-3 h-3 animate-spin text-brand-blue" />}
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            name={`player_${index}_name`}
+                            value={name}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            required
+                            autoComplete="off"
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue bg-white"
+                            placeholder="Type to search..."
+                        />
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+
+                    {showResults && searchResults.length > 0 && (
+                        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-auto">
+                            {searchResults.map((user) => (
+                                <button
+                                    key={user.id}
+                                    type="button"
+                                    onClick={() => selectUser(user)}
+                                    className="w-full px-4 py-2 text-left hover:bg-gray-50 flex flex-col border-b border-gray-50 last:border-0"
+                                >
+                                    <span className="font-bold text-sm text-gray-900">{user.name}</span>
+                                    <span className="text-xs text-gray-500">{user.email}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <div>
+                    <label htmlFor={`player_${index}_email`} className="block text-xs font-medium text-gray-500 mb-1">
+                        Email
+                    </label>
+                    <input
+                        type="email"
+                        name={`player_${index}_email`}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue bg-white"
+                        placeholder="player@example.com"
+                    />
+                </div>
+            </div>
+        </div>
     )
 }

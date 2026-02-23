@@ -125,7 +125,7 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                 })
 
                 const host = process.env.NEXTAUTH_URL || "http://localhost:3000"
-                const magicLink = `${host}/api/auth/callback/email?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
+                const magicLink = `${host}/api/auth/callback/nodemailer?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
 
                 // Don't email the admin if they created the group
                 if (user.email !== session.user.email) {
@@ -286,7 +286,7 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
             })
 
             const host = process.env.NEXTAUTH_URL || "http://localhost:3000"
-            const magicLink = `${host}/api/auth/callback/email?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
+            const magicLink = `${host}/api/auth/callback/nodemailer?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
 
             emailTasks.push({ email: player.email, magicLink, name: player.name })
         }

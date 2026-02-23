@@ -45,8 +45,8 @@ model GroupMembership {
   draftPosition   Int      @default(0)
   finalScoreGuess Int?
   nitWinnerGuess  String?
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   group           Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, groupId])
 }
@@ -109,8 +109,8 @@ model Team {
   tournamentId String
   isEliminated Boolean      @default(false)
   draftPicks   DraftPick[]
-  wonGames     GameResult[] @relation("Winner")
   lostGames    GameResult[] @relation("Loser")
+  wonGames     GameResult[] @relation("Winner")
   tournament   Tournament   @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, name])
@@ -124,8 +124,8 @@ model Group {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   draftPicks   DraftPick[]
-  tournament   Tournament        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   admin        User              @relation("GroupAdmin", fields: [adminId], references: [id])
+  tournament   Tournament        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   memberships  GroupMembership[]
 }
 
@@ -138,8 +138,8 @@ model DraftPick {
   pickNumber Int
   createdAt  DateTime @default(now())
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   team       Team     @relation(fields: [teamId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, teamId])
   @@unique([groupId, round, pickNumber])
@@ -153,9 +153,9 @@ model GameResult {
   loserId      String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  loser        Team?      @relation("Loser", fields: [loserId], references: [id])
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   winner       Team?      @relation("Winner", fields: [winnerId], references: [id])
-  loser        Team?      @relation("Loser", fields: [loserId], references: [id])
 }
 
 model HallOfFame {

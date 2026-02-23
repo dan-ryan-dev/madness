@@ -14,14 +14,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
         Nodemailer({
             server: {
-                host: process.env.EMAIL_SERVER_HOST,
+                host: process.env.EMAIL_SERVER_HOST || "localhost",
                 port: parseInt(process.env.EMAIL_SERVER_PORT || "587"),
                 auth: {
-                    user: process.env.EMAIL_SERVER_USER,
-                    pass: process.env.EMAIL_SERVER_PASSWORD,
+                    user: process.env.EMAIL_SERVER_USER || "user",
+                    pass: process.env.EMAIL_SERVER_PASSWORD || "pass",
                 },
             },
-            from: process.env.EMAIL_FROM,
+            from: process.env.EMAIL_FROM || "noreply@example.com",
             async sendVerificationRequest({ identifier: email, url }) {
                 console.log(`[NextAuth] Login Link for ${email}: ${url}`)
             }

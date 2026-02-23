@@ -82,3 +82,33 @@ export async function updateMemberOrder(groupId: string, userId: string, positio
         return { success: false, message: "Failed to update position" }
     }
 }
+
+export async function searchUsers(query: string) {
+    const session = await auth()
+    if (!session?.user?.role || !["SUPER_ADMIN", "GROUP_ADMIN"].includes(session.user.role)) {
+        return []
+    }
+
+    if (!query || query.length < 2) return []
+
+    try {
+        const users = await prisma.user.findMany({
+            where: {
+                OR: [
+                    { name: { contains: query, mode: 'insensitive' } },
+                    { email: { contains: query, mode: 'insensitive' } }
+                ]
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true
+            },
+            take: 10
+        })
+        return users
+    } catch (error) {
+        console.error("Search users error:", error)
+        return []
+    }
+}
