@@ -34,9 +34,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 },
             },
             from: process.env.EMAIL_FROM || "noreply@example.com",
-            async sendVerificationRequest({ identifier: email, url }) {
-                console.log(`[NextAuth] Login Link for ${email}: ${url}`)
-            }
+            ...(process.env.EMAIL_SERVER_HOST ? {} : {
+                async sendVerificationRequest({ identifier: email, url }) {
+                    console.log(`[NextAuth] Login Link for ${email}: ${url}`)
+                }
+            })
         }),
         Google({
             clientId: process.env.AUTH_GOOGLE_ID,
