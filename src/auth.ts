@@ -8,6 +8,18 @@ import prisma from "@/lib/prisma"
 
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
 
+// Production Diagnostics
+if (process.env.NODE_ENV === 'production') {
+    console.log("[Auth] Production Node Version:", process.version);
+    console.log("[Auth] NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
+    if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
+        console.error("[Auth] CRITICAL: AUTH_SECRET is missing in production!");
+    }
+    if (!process.env.EMAIL_SERVER_HOST) {
+        console.warn("[Auth] EMAIL_SERVER_HOST is missing - Magic Links will NOT send.");
+    }
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
     adapter: isBuildTime ? undefined : PrismaAdapter(prisma) as any,

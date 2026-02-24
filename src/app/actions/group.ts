@@ -8,9 +8,21 @@ import { randomUUID } from "crypto"
 
 // Configure Nodemailer for development (logs to console if no real transport)
 // For a real app, use SendGrid/Resend/AWS SES
-const transporter = nodemailer.createTransport({
-    jsonTransport: true,
-})
+// Configure Nodemailer
+const transporter = nodemailer.createTransport(
+    (process.env.EMAIL_SERVER_HOST
+        ? {
+            host: process.env.EMAIL_SERVER_HOST,
+            port: parseInt(process.env.EMAIL_SERVER_PORT || "587"),
+            auth: {
+                user: process.env.EMAIL_SERVER_USER,
+                pass: process.env.EMAIL_SERVER_PASSWORD,
+            },
+        }
+        : {
+            jsonTransport: true,
+        }) as any
+)
 
 interface PlayerInput {
     name: string
