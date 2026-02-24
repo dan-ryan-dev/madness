@@ -12,7 +12,11 @@ const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
 if (process.env.NODE_ENV === 'production') {
     console.log("[Auth] Production Node Version:", process.version);
     console.log("[Auth] NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
-    if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
+    console.log("[Auth] AUTH_URL:", process.env.AUTH_URL);
+    console.log("[Auth] VERCEL_URL:", process.env.VERCEL_URL);
+    const hasSecret = !!(process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET);
+    console.log("[Auth] Has AUTH_SECRET:", hasSecret);
+    if (!hasSecret) {
         console.error("[Auth] CRITICAL: AUTH_SECRET is missing in production!");
     }
     if (!process.env.EMAIL_SERVER_HOST) {
@@ -22,6 +26,7 @@ if (process.env.NODE_ENV === 'production') {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
+    trustHost: true,
     adapter: isBuildTime ? undefined : PrismaAdapter(prisma) as any,
     providers: [
         Nodemailer({

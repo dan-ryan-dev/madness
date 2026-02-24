@@ -13,6 +13,10 @@ export default function LoginPage() {
 
     const handleMagicLink = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!email) {
+            setError("Please enter your email address first.")
+            return
+        }
         setIsLoading(true)
         setError("")
         try {
