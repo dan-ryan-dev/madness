@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 
 async function main() {
     // Configuration - UPDATE THESE
-    const email = "kblair@wattrust.com"
+    const email = "kblair@watrust.com" // Fixed typo (single T)
     const password = "madness"
     const name = "Kevin Blair"
     const role = "SUPER_ADMIN"
