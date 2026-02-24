@@ -4,23 +4,37 @@ import { signIn } from "next-auth/react"
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { Mail, Lock, ArrowRight, CheckCircle2, ChevronLeft } from "lucide-react"
+
+type LoginStep = "EMAIL" | "CHOICE" | "PASSWORD" | "SENT"
 
 export default function LoginPage() {
+    const [step, setStep] = useState<LoginStep>("EMAIL")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
 
-    const handleMagicLink = async (e: React.FormEvent) => {
+    const handleEmailSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!email) {
-            setError("Please enter your email address first.")
+            setError("Please enter your email address.")
             return
         }
+        setError("")
+        setStep("CHOICE")
+    }
+
+    const handleMagicLink = async () => {
         setIsLoading(true)
         setError("")
         try {
-            await signIn("nodemailer", { email, callbackUrl: "/" })
+            const result = await signIn("nodemailer", { email, callbackUrl: "/", redirect: false })
+            if (result?.error) {
+                setError("Failed to send login link. Please check your email and try again.")
+            } else {
+                setStep("SENT")
+            }
         } catch (err) {
             setError("Something went wrong. Please try again.")
         } finally {
@@ -58,7 +72,7 @@ export default function LoginPage() {
             />
 
             <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-gray-100 relative z-10 mx-4">
-                <div className="flex flex-col items-center mb-8">
+                <div className="flex flex-col items-center mb-10">
                     <div className="relative w-48 h-24 mb-4">
                         <Image
                             src="/logo.png"
@@ -70,63 +84,50 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Email Address
-                        </label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com"
-                            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent transition-all"
-                            required
-                        />
+                {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium animate-in fade-in slide-in-from-top-2">
+                        {error}
                     </div>
+                )}
 
-                    <form onSubmit={handleCredentialsLogin} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Password
-                            </label>
+                {step === "EMAIL" && (
+                    <form onSubmit={handleEmailSubmit} className="space-y-6">
+                        <div className="text-center space-y-2">
+                            <h2 className="text-2xl font-black text-gray-900 uppercase">Welcome</h2>
+                            <p className="text-gray-500 text-sm">Enter your email to get started</p>
+                        </div>
+                        <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent transition-all"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="you@example.com"
+                                className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent transition-all text-lg"
                                 required
                             />
                         </div>
-
-                        {error && (
-                            <p className="text-sm text-red-600 font-medium">{error}</p>
-                        )}
-
                         <button
                             type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-brand-orange text-white py-3 rounded-lg font-bold hover:bg-orange-600 transform transition-all active:scale-[0.98] disabled:opacity-70"
+                            className="w-full bg-brand-orange text-white py-4 rounded-xl font-black uppercase tracking-wider hover:bg-orange-600 transform transition-all active:scale-[0.98] shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 group"
                         >
-                            {isLoading ? "Signing in..." : "Sign in"}
+                            Continue
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </button>
-                    </form>
 
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-gray-200"></span>
+                        <div className="relative py-4">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-gray-100"></span>
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase font-bold tracking-widest text-gray-400">
+                                <span className="bg-white px-4">Or Quick Sign In</span>
+                            </div>
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-white px-2 text-gray-500 font-medium">Or</span>
-                        </div>
-                    </div>
 
-                    <div className="space-y-4">
                         <button
+                            type="button"
                             onClick={() => signIn("google", { callbackUrl: "/" })}
-                            disabled={isLoading}
-                            className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-3"
+                            className="w-full bg-white border-2 border-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-3"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path
@@ -148,34 +149,133 @@ export default function LoginPage() {
                             </svg>
                             Continue with Google
                         </button>
+                    </form>
+                )}
+
+                {step === "CHOICE" && (
+                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                        <button
+                            onClick={() => setStep("EMAIL")}
+                            className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-brand-blue transition-colors mb-4"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            {email}
+                        </button>
+
+                        <div className="text-center space-y-2 pb-2">
+                            <h2 className="text-2xl font-black text-gray-900 uppercase">Sign In Method</h2>
+                            <p className="text-gray-500 text-sm">Choose how you want to log in</p>
+                        </div>
+
+                        <div className="grid gap-4">
+                            <button
+                                onClick={handleMagicLink}
+                                disabled={isLoading}
+                                className="w-full bg-brand-blue text-white p-6 rounded-2xl text-left hover:bg-blue-900 transition-all shadow-xl shadow-blue-500/10 group flex items-start gap-4"
+                            >
+                                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                                    <Mail className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="font-black uppercase tracking-tight italic">Email me a login link</p>
+                                    <p className="text-xs text-blue-200 mt-1">Recommended for players. Secure & password-free.</p>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => setStep("PASSWORD")}
+                                className="w-full bg-white border-2 border-gray-100 p-6 rounded-2xl text-left hover:border-gray-200 transition-all group flex items-start gap-4"
+                            >
+                                <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-gray-100 transition-colors">
+                                    <Lock className="w-6 h-6 text-gray-400" />
+                                </div>
+                                <div>
+                                    <p className="font-black uppercase tracking-tight italic text-gray-900">Sign in with password</p>
+                                    <p className="text-xs text-gray-500 mt-1">For admins or if you've already set a password.</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {step === "PASSWORD" && (
+                    <form onSubmit={handleCredentialsLogin} className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                        <button
+                            onClick={() => setStep("CHOICE")}
+                            className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-brand-blue transition-colors mb-4"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Back to options
+                        </button>
+
+                        <div className="text-center space-y-2 pb-2">
+                            <h2 className="text-2xl font-black text-gray-900 uppercase">Enter Password</h2>
+                            <p className="text-gray-500 text-sm italic">{email}</p>
+                        </div>
+
+                        <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent transition-all text-lg"
+                                required
+                            />
+                        </div>
 
                         <button
-                            onClick={handleMagicLink}
+                            type="submit"
                             disabled={isLoading}
-                            className="w-full bg-white border-2 border-brand-blue text-brand-blue py-3 rounded-lg font-bold hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+                            className="w-full bg-brand-orange text-white py-4 rounded-xl font-black uppercase tracking-wider hover:bg-orange-600 transform transition-all active:scale-[0.98] shadow-lg shadow-orange-500/20"
                         >
-                            Sign in with Nodemailer
+                            {isLoading ? "Signing in..." : "Finalize Sign In"}
                         </button>
-                        <p className="text-xs text-gray-500 italic text-center px-4 leading-relaxed">
-                            “This will sign you in securely via your email. You will receive a Magic Link to access the app, where you can then set or change your permanent password in your profile settings.”
-                        </p>
-                    </div>
 
-                    <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
-                        <Link
-                            href="/auth/reset-password"
-                            className="text-sm font-medium text-[#002366] hover:underline text-center"
+                        <div className="text-center">
+                            <Link
+                                href="/auth/reset-password"
+                                className="text-sm font-bold text-gray-400 hover:text-brand-blue transition-colors"
+                            >
+                                Forgot Password?
+                            </Link>
+                        </div>
+                    </form>
+                )}
+
+                {step === "SENT" && (
+                    <div className="text-center py-8 animate-in zoom-in-95 duration-500">
+                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <CheckCircle2 className="w-10 h-10 text-green-600" />
+                        </div>
+                        <h2 className="text-2xl font-black text-gray-900 uppercase mb-4">Check Your Inbox</h2>
+                        <p className="text-gray-600 mb-8 leading-relaxed">
+                            We've sent a secure login link to <br />
+                            <span className="font-bold text-gray-900 animate-pulse">{email}</span>.
+                        </p>
+                        <p className="text-xs text-gray-400 mb-8">
+                            If you don't see it, check your spam folder or try again.
+                        </p>
+                        <button
+                            onClick={() => setStep("CHOICE")}
+                            className="w-full border-2 border-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-50 transition-all"
                         >
-                            Forgot Password?
-                        </Link>
+                            Try another way
+                        </button>
+                    </div>
+                )}
+
+                {step !== "SENT" && (
+                    <div className="mt-10 pt-6 border-t border-gray-100 flex flex-col gap-4 text-center">
                         <Link
                             href="/auth/register"
-                            className="text-sm font-medium text-[#002366] hover:underline text-center"
+                            className="text-sm font-bold text-brand-blue hover:text-blue-800 transition-colors uppercase tracking-tight"
                         >
-                            Don&apos;t have an account? Sign Up
+                            Create a new account
                         </Link>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     )
