@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import nodemailer from "nodemailer"
 import { randomUUID } from "crypto"
+import { getBaseUrl } from "@/lib/utils"
 
 // Configure Nodemailer for development (logs to console if no real transport)
 // For a real app, use SendGrid/Resend/AWS SES
@@ -136,7 +137,7 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                     }
                 })
 
-                const host = process.env.NEXTAUTH_URL || "http://localhost:3000"
+                const host = getBaseUrl()
                 const magicLink = `${host}/api/auth/callback/nodemailer?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
 
                 // Don't email the admin if they created the group
@@ -297,7 +298,7 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
                 data: { identifier: player.email, token, expires }
             })
 
-            const host = process.env.NEXTAUTH_URL || "http://localhost:3000"
+            const host = getBaseUrl()
             const magicLink = `${host}/api/auth/callback/nodemailer?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
 
             emailTasks.push({ email: player.email, magicLink, name: player.name })
