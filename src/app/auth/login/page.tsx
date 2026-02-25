@@ -155,6 +155,7 @@ export default function LoginPage() {
                 {step === "CHOICE" && (
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         <button
+                            type="button"
                             onClick={() => setStep("EMAIL")}
                             className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-brand-blue transition-colors mb-4"
                         >
@@ -169,29 +170,29 @@ export default function LoginPage() {
 
                         <div className="grid gap-4">
                             <button
-                                onClick={handleMagicLink}
-                                disabled={isLoading}
+                                onClick={() => setStep("PASSWORD")}
                                 className="w-full bg-brand-blue text-white p-6 rounded-2xl text-left hover:bg-blue-900 transition-all shadow-xl shadow-blue-500/10 group flex items-start gap-4"
                             >
                                 <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
-                                    <Mail className="w-6 h-6" />
+                                    <Lock className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <p className="font-black uppercase tracking-tight italic">Email me a login link</p>
-                                    <p className="text-xs text-blue-200 mt-1">Recommended for players. Secure & password-free.</p>
+                                    <p className="font-black uppercase tracking-tight italic">Sign in with password</p>
+                                    <p className="text-xs text-blue-200 mt-1">For admins or if you've already set a password.</p>
                                 </div>
                             </button>
 
                             <button
-                                onClick={() => setStep("PASSWORD")}
+                                onClick={handleMagicLink}
+                                disabled={isLoading}
                                 className="w-full bg-white border-2 border-gray-100 p-6 rounded-2xl text-left hover:border-gray-200 transition-all group flex items-start gap-4"
                             >
                                 <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-gray-100 transition-colors">
-                                    <Lock className="w-6 h-6 text-gray-400" />
+                                    <Mail className="w-6 h-6 text-gray-400" />
                                 </div>
                                 <div>
-                                    <p className="font-black uppercase tracking-tight italic text-gray-900">Sign in with password</p>
-                                    <p className="text-xs text-gray-500 mt-1">For admins or if you've already set a password.</p>
+                                    <p className="font-black uppercase tracking-tight italic text-gray-900">Email me a login link</p>
+                                    <p className="text-xs text-gray-500 mt-1">Recommended for players. Secure & password-free.</p>
                                 </div>
                             </button>
                         </div>
@@ -201,6 +202,7 @@ export default function LoginPage() {
                 {step === "PASSWORD" && (
                     <form onSubmit={handleCredentialsLogin} className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         <button
+                            type="button"
                             onClick={() => setStep("CHOICE")}
                             className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-brand-blue transition-colors mb-4"
                         >
