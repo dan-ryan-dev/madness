@@ -112,3 +112,122 @@ export async function searchUsers(query: string) {
         return []
     }
 }
+import { createTransport } from "nodemailer"
+import bcrypt from "bcryptjs"
+import { v4 as uuidv4 } from "uuid"
+
+// Transport setup for Nodemailer
+const transporter = createTransport({
+    host: process.env.EMAIL_SERVER_HOST,
+    port: parseInt(process.env.EMAIL_SERVER_PORT || "587"),
+    auth: {
+        user: process.env.EMAIL_SERVER_USER,
+        pass: process.env.EMAIL_SERVER_PASSWORD,
+    },
+})
+
+export async function inviteManagers(tournamentId: string, managers: { name: string, email: string }[]) {
+    const session = await auth()
+
+    // Strict RBAC check: Only Super Admins can bulk invite managers
+    if (session?.user?.role !== "SUPER_ADMIN") {
+        return { success: false, message: "Unauthorized" }
+    }
+
+    const tournament = await prisma.tournament.findUnique({
+        where: { id: tournamentId }
+    })
+
+    if (!tournament) {
+        return { success: false, message: "Tournament not found" }
+    }
+
+    const results = {
+        invited: 0,
+        skipped: 0,
+        failed: 0,
+        errors: [] as string[]
+    }
+
+    for (const manager of managers) {
+        try {
+            const email = manager.email.toLowerCase().trim()
+            const name = manager.name.trim()
+
+            if (!email || !name) continue
+
+            // 1. Create or Update User
+            const tempPassword = Math.random().toString(36).slice(-8).toUpperCase()
+            const hashedPassword = await bcrypt.hash(tempPassword, 10)
+
+            const user = await prisma.user.upsert({
+                where: { email },
+                update: {
+                    role: "GROUP_ADMIN",
+                    // We only update the password if they don't have one or if we are resetting them
+                    // For now, let's assume we are giving them a fresh one for the new tournament
+                    password: hashedPassword,
+                    name: name
+                },
+                create: {
+                    email,
+                    name,
+                    password: hashedPassword,
+                    role: "GROUP_ADMIN"
+                }
+            })
+
+            // 2. Send Invitation Email
+            const loginUrl = `${process.env.NEXTAUTH_URL}/auth/login`
+
+            await transporter.sendMail({
+                to: email,
+                from: process.env.EMAIL_FROM,
+                subject: `Invitation: Manage a Group for ${tournament.name}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+                        <h2 style="color: #143278; text-align: center;">${tournament.name}</h2>
+                        <p>Hello ${name},</p>
+                        <p>You have been selected to manage a group for <strong>Krazy Kevy's Madness 2026</strong>!</p>
+                        
+                        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 0; color: #374151;"><strong>Your Sign-In Credentials:</strong></p>
+                            <p style="margin: 10px 0 5px 0;">Email: <code>${email}</code></p>
+                            <p style="margin: 0;">Temporary Password: <code>${tempPassword}</code></p>
+                        </div>
+
+                        <h3 style="color: #143278;">What's Next?</h3>
+                        <ol>
+                            <li>Click the button below to sign in (Select <strong>"Sign in with password"</strong>).</li>
+                            <li>Once logged in, click the <strong>"Admin Console"</strong> link in the top navigation bar.</li>
+                            <li>From your dashboard, you can manage your group and add your 8 players before draft day.</li>
+                        </ol>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${loginUrl}" style="background-color: #F58220; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Sign In to Madness 2026</a>
+                        </div>
+
+                        <p style="color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; pt: 20px; margin-top: 30px;">
+                            <strong>Security Note:</strong> Please change your password after your first login via Account Settings.
+                        </p>
+                    </div>
+                `,
+            })
+
+            results.invited++
+        } catch (error: any) {
+            console.error(`Failed to invite ${manager.email}:`, error)
+            results.failed++
+            results.errors.push(`${manager.email}: ${error.message}`)
+        }
+    }
+
+    revalidatePath("/admin/users")
+    revalidatePath(`/admin/tournaments/${tournamentId}/managers`)
+
+    return {
+        success: results.failed === 0,
+        message: `Successfully invited ${results.invited} managers. ${results.failed} failed.`,
+        data: results
+    }
+}
