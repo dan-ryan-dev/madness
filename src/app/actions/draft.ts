@@ -116,7 +116,8 @@ export async function pickTeam(groupId: string, teamId: string) {
             }
 
             // Verify turn (again, inside transaction)
-            if (expectedMember.userId !== session.user.id && !isGroupAdmin) {
+            const isSuperAdmin = session.user.role === "SUPER_ADMIN"
+            if (expectedMember.userId !== session.user.id && !isGroupAdmin && !isSuperAdmin) {
                 const expectedUser = expectedMember.user
                 throw new Error(`Not your turn! Waiting for ${expectedUser?.name || expectedUser?.email}`)
             }
