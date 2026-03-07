@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma"
 import Link from "next/link"
 import { Users, ArrowLeft, Mail, Calendar, Search } from "lucide-react"
 import { UserRoleSelector } from "@/components/admin/UserRoleSelector"
+import { EditUserModal } from "@/components/admin/EditUserModal"
+import { DeleteUserButton } from "@/components/admin/DeleteUserButton"
 
 export const dynamic = 'force-dynamic'
 
@@ -73,6 +75,7 @@ export default async function UserManagementPage({
                                 <th className="px-6 py-4">Contact</th>
                                 <th className="px-6 py-4">Joined</th>
                                 <th className="px-6 py-4">Current Role</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -107,6 +110,12 @@ export default async function UserManagementPage({
                                             initialRole={user.role}
                                             userEmail={user.email || ""}
                                         />
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex justify-end items-center gap-1">
+                                            <EditUserModal user={user} />
+                                            <DeleteUserButton userId={user.id} userName={user.name || user.email || "User"} />
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

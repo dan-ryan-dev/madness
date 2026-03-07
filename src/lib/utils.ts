@@ -6,7 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getBaseUrl() {
-  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
+  let url = process.env.NEXTAUTH_URL || process.env.AUTH_URL;
+
+  if (!url && process.env.VERCEL_URL) {
+    url = `https://${process.env.VERCEL_URL}`;
+  }
+
+  // Final fallback
+  if (!url || url === "undefined") {
+    url = "http://localhost:3000";
+  }
+
+  return url;
 }

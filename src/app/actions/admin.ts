@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
+import { getBaseUrl } from "@/lib/utils"
 
 export async function resetDraft(prevState: any, formData: FormData) {
     const session = await auth()
@@ -126,7 +127,7 @@ const transporter = createTransport({
     },
 })
 
-export async function inviteManagers(tournamentId: string, managers: { name: string, email: string }[]) {
+export async function inviteManagers(tournamentId: string, managers: { name: string, email: string }[], sendEmails: boolean = false) {
     const session = await auth()
 
     // Strict RBAC check: Only Super Admins can bulk invite managers
@@ -146,7 +147,8 @@ export async function inviteManagers(tournamentId: string, managers: { name: str
         invited: 0,
         skipped: 0,
         failed: 0,
-        errors: [] as string[]
+        errors: [] as string[],
+        invitations: [] as { email: string, tempPassword: string }[]
     }
 
     for (const manager of managers) {
@@ -178,42 +180,48 @@ export async function inviteManagers(tournamentId: string, managers: { name: str
             })
 
             // 2. Send Invitation Email
-            const loginUrl = `${process.env.NEXTAUTH_URL}/auth/login`
+            const baseUrl = getBaseUrl()
+            const loginUrl = `${baseUrl}/auth/login`
 
-            await transporter.sendMail({
-                to: email,
-                from: process.env.EMAIL_FROM,
-                subject: `Invitation: Manage a Group for ${tournament.name}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
-                        <h2 style="color: #143278; text-align: center;">${tournament.name}</h2>
-                        <p>Hello ${name},</p>
-                        <p>You have been selected to manage a group for <strong>Krazy Kevy's Madness 2026</strong>!</p>
-                        
-                        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 0; color: #374151;"><strong>Your Sign-In Credentials:</strong></p>
-                            <p style="margin: 10px 0 5px 0;">Email: <code>${email}</code></p>
-                            <p style="margin: 0;">Temporary Password: <code>${tempPassword}</code></p>
+            console.log(`[Invitation Debug] User: ${email}, BaseUrl: ${baseUrl}, LoginUrl: ${loginUrl}`)
+
+            if (sendEmails) {
+                await transporter.sendMail({
+                    to: email,
+                    from: process.env.EMAIL_FROM,
+                    subject: `Invitation: Manage a Group for ${tournament.name}`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+                            <h2 style="color: #143278; text-align: center;">${tournament.name}</h2>
+                            <p>Hello ${name},</p>
+                            <p>You have been selected to manage a group for <strong>Krazy Kevy's Madness 2026</strong>!</p>
+                            
+                            <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                <p style="margin: 0; color: #374151;"><strong>Your Sign-In Credentials:</strong></p>
+                                <p style="margin: 10px 0 5px 0;">Email: <code>${email}</code></p>
+                                <p style="margin: 0;">Temporary Password: <code>${tempPassword}</code></p>
+                            </div>
+
+                            <h3 style="color: #143278;">What's Next?</h3>
+                            <ol>
+                                <li>Click the button below to sign in (Select <strong>"Sign in with password"</strong>).</li>
+                                <li>Once logged in, click the <strong>"Admin Console"</strong> link in the top navigation bar.</li>
+                                <li>From your dashboard, you can manage your group and add your 8 players before draft day.</li>
+                            </ol>
+
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${loginUrl}" style="background-color: #F58220; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Sign In to Madness 2026</a>
+                            </div>
+
+                            <p style="color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; pt: 20px; margin-top: 30px;">
+                                <strong>Security Note:</strong> Please change your password after your first login via Account Settings.
+                            </p>
                         </div>
+                    `,
+                })
+            }
 
-                        <h3 style="color: #143278;">What's Next?</h3>
-                        <ol>
-                            <li>Click the button below to sign in (Select <strong>"Sign in with password"</strong>).</li>
-                            <li>Once logged in, click the <strong>"Admin Console"</strong> link in the top navigation bar.</li>
-                            <li>From your dashboard, you can manage your group and add your 8 players before draft day.</li>
-                        </ol>
-
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="${loginUrl}" style="background-color: #F58220; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Sign In to Madness 2026</a>
-                        </div>
-
-                        <p style="color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; pt: 20px; margin-top: 30px;">
-                            <strong>Security Note:</strong> Please change your password after your first login via Account Settings.
-                        </p>
-                    </div>
-                `,
-            })
-
+            results.invitations.push({ email, tempPassword })
             results.invited++
         } catch (error: any) {
             console.error(`Failed to invite ${manager.email}:`, error)
@@ -229,5 +237,63 @@ export async function inviteManagers(tournamentId: string, managers: { name: str
         success: results.failed === 0,
         message: `Successfully invited ${results.invited} managers. ${results.failed} failed.`,
         data: results
+    }
+}
+
+export async function deleteUser(userId: string) {
+    const session = await auth()
+    if (session?.user?.role !== "SUPER_ADMIN") {
+        return { success: false, message: "Unauthorized" }
+    }
+
+    try {
+        // Check if user is an admin of any groups
+        const adminGroups = await prisma.group.count({
+            where: { adminId: userId }
+        })
+
+        if (adminGroups > 0) {
+            return {
+                success: false,
+                message: "Cannot delete user who is an active group admin. Reassign or delete their groups first."
+            }
+        }
+
+        await prisma.user.delete({
+            where: { id: userId }
+        })
+
+        revalidatePath("/admin/users")
+        return { success: true, message: "User deleted successfully" }
+    } catch (error) {
+        console.error("Delete user error:", error)
+        return { success: false, message: "Failed to delete user" }
+    }
+}
+
+export async function updateUser(userId: string, data: { name?: string, email?: string }) {
+    const session = await auth()
+    if (session?.user?.role !== "SUPER_ADMIN") {
+        return { success: false, message: "Unauthorized" }
+    }
+
+    try {
+        const updateData: any = {}
+        if (data.name) updateData.name = data.name.trim()
+        if (data.email) updateData.email = data.email.toLowerCase().trim()
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: updateData
+        })
+
+        revalidatePath("/admin/users")
+        return { success: true, message: "User updated successfully" }
+    } catch (error: any) {
+        console.error("Update user error:", error)
+        if (error.code === 'P2002') {
+            return { success: false, message: "This email is already in use by another account." }
+        }
+        return { success: false, message: "Failed to update user" }
     }
 }

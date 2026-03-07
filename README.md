@@ -14,7 +14,7 @@ A premium, high-stakes March Madness Draft Pool application. Forget conventional
 
 - **Framework**: [Next.js 15+](https://nextjs.org/) (App Router)
 - **Language**: TypeScript
-- **Database**: SQLite with [Prisma ORM](https://www.prisma.io/)
+- **Database**: PostgreSQL with [Supabase](https://supabase.com/) & [Prisma ORM](https://www.prisma.io/)
 - **Authentication**: [Auth.js (NextAuth.js)](https://authjs.dev/)
 - **Styling**: Tailwind CSS & Lucide Icons
 - **Deployment**: Optimized for [Vercel](https://vercel.com/)
@@ -28,16 +28,29 @@ A premium, high-stakes March Madness Draft Pool application. Forget conventional
    npm install
    ```
 
-2. **Database Setup**:
+2. **Environment Setup**:
+   Create a `.env.local` file in the root directory and add your `DATABASE_URL`:
+   ```bash
+   DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres"
+   ```
+   *Note: See [Architecture Guide](./docs/architecture.md) for project IDs.*
+
+3. **Database Sync**:
    ```bash
    npx prisma generate
    npx prisma db push
    ```
 
-3. **Run Dev**:
+4. **Run Dev**:
    ```bash
    npm run dev
    ```
+
+## 📖 Documentation
+
+- [**Architecture & Environments**](./docs/architecture.md) - How local/prod connect to Supabase.
+- [**Workflow Guide**](./docs/workflow-guide.md) - How to deploy and manage schema changes.
+- [**Prisma Schema**](./prisma/schema.prisma) - The core data model.
 
 ## 📈 Portfolio Highlights
 

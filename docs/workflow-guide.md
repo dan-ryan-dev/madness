@@ -3,7 +3,8 @@
 This guide outlines the professional workflow for maintaining Krazy Kevy's March Madness.
 
 ## 1. Local Development
-- **Database**: Your laptop uses `.env.local`, which points to the **`madness-dev`** Supabase project.
+- **Database**: Your laptop uses `.env.local`, which points to the **`madness-dev`** Supabase project (`uhwszvkoukjtgjblsmms`).
+- **Map**: See [Architecture Guide](./architecture.md) for a full mapping of environments.
 - **Workflow**: 
   1. Run `npm run dev` to start the local server.
   2. Make your code changes.

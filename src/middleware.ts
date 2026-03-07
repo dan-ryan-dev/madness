@@ -18,7 +18,7 @@ export default auth((req) => {
 
     // Redirect unauthenticated users
     if (!isLoggedIn && (isAdminRoute || isDraftRoute || isDashboardRoute)) {
-        return NextResponse.redirect(new URL("/api/auth/signin", req.nextUrl))
+        return NextResponse.redirect(new URL("/auth/login", req.nextUrl))
     }
 
     // Role-based access control

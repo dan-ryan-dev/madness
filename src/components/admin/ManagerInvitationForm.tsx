@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { inviteManagers } from "@/app/actions/admin"
-import { Loader2, CheckCircle, AlertCircle, Eye, Mail, ArrowRight, UserPlus, Info } from "lucide-react"
+import { Loader2, CheckCircle, CheckCircle2, AlertCircle, Eye, Mail, ArrowRight, UserPlus, Info, Copy, Check } from "lucide-react"
+import { getBaseUrl } from "@/lib/utils"
 import Link from "next/link"
 
 export function ManagerInvitationForm({ tournamentId }: { tournamentId: string }) {
@@ -10,7 +11,10 @@ export function ManagerInvitationForm({ tournamentId }: { tournamentId: string }
     const [previewData, setPreviewData] = useState<{ name: string, email: string }[]>([])
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
+    const [sendEmails, setSendEmails] = useState(false)
+    const [invitedResults, setInvitedResults] = useState<{ email: string, tempPassword: string }[]>([])
     const [isPending, startTransition] = useTransition()
+    const [copied, setCopied] = useState(false)
 
     const SAMPLE_DATA = `Dan Ryan, dan@example.com\nJoe Sacco, joe@example.com`
 
@@ -52,9 +56,10 @@ export function ManagerInvitationForm({ tournamentId }: { tournamentId: string }
         if (previewData.length === 0) return
 
         startTransition(async () => {
-            const result = await inviteManagers(tournamentId, previewData)
-            if (result.success) {
+            const result = await inviteManagers(tournamentId, previewData, sendEmails)
+            if (result.success && result.data) {
                 setSuccess(result.message as string)
+                setInvitedResults(result.data.invitations)
                 setError("")
                 setPreviewData([])
                 setManagerData("")
@@ -63,6 +68,13 @@ export function ManagerInvitationForm({ tournamentId }: { tournamentId: string }
                 setSuccess("")
             }
         })
+    }
+
+    const copyInstructions = (inv: { email: string, tempPassword: string }) => {
+        const text = `Hi! You've been set up as a manager for Madness 2026.\n\nSign in here: ${getBaseUrl()}/auth/login\nEmail: ${inv.email}\nTemp Password: ${inv.tempPassword}\n\nPlease change your password after logging in!`
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
     }
 
     return (
@@ -82,6 +94,19 @@ export function ManagerInvitationForm({ tournamentId }: { tournamentId: string }
                 placeholder={SAMPLE_DATA}
                 className="w-full h-48 p-4 font-mono text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
             />
+
+            <div className="flex items-center gap-2 px-1">
+                <input
+                    type="checkbox"
+                    id="sendEmails"
+                    checked={sendEmails}
+                    onChange={(e) => setSendEmails(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+                />
+                <label htmlFor="sendEmails" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    Send invitation emails automatically
+                </label>
+            </div>
 
             <div className="flex gap-4">
                 <button
@@ -111,9 +136,41 @@ export function ManagerInvitationForm({ tournamentId }: { tournamentId: string }
             {success && (
                 <div className="bg-green-50 border border-green-100 p-6 rounded-2xl animate-in fade-in slide-in-from-top-2">
                     <div className="flex items-center gap-3 text-green-700 mb-4">
-                        <CheckCircle className="w-6 h-6 flex-shrink-0" />
+                        <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
                         <span className="font-bold text-lg">{success}</span>
                     </div>
+
+                    {invitedResults.length > 0 && (
+                        <div className="mb-6 overflow-hidden rounded-xl border border-green-200 bg-white">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-green-100/50">
+                                    <tr>
+                                        <th className="px-4 py-2 font-bold text-green-800">Email</th>
+                                        <th className="px-4 py-2 font-bold text-green-800">Temp Password</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-green-50">
+                                    {invitedResults.map((inv) => (
+                                        <tr key={inv.email}>
+                                            <td className="px-4 py-2 text-gray-700 font-medium">{inv.email}</td>
+                                            <td className="px-4 py-2 font-mono font-bold text-brand-orange">{inv.tempPassword}</td>
+                                            <td className="px-4 py-2 text-right">
+                                                <button
+                                                    onClick={() => copyInstructions(inv)}
+                                                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-brand-blue transition-all flex items-center gap-1 text-xs font-bold"
+                                                    title="Copy Invite Message"
+                                                >
+                                                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                                    {copied ? 'Copied!' : 'Copy Msg'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
                     <Link
                         href="/admin"
                         className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition-colors"

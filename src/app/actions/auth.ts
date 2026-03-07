@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { createTransport } from "nodemailer"
 import { v4 as uuidv4 } from "uuid"
+import { getBaseUrl } from "@/lib/utils"
 
 // Transport setup for Nodemailer
 const transporter = createTransport({
@@ -70,7 +71,7 @@ export async function forgotPassword(prevState: any, formData: FormData) {
         create: { email, token, expires },
     })
 
-    const resetLink = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}`
+    const resetLink = `${getBaseUrl()}/auth/reset-password?token=${token}`
 
     try {
         await transporter.sendMail({

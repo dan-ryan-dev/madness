@@ -5,24 +5,19 @@ import Nodemailer from "next-auth/providers/nodemailer"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { authConfig } from "./auth.config"
 import prisma from "@/lib/prisma"
+import bcrypt from "bcryptjs"
 
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
 
-// Production Diagnostics
-if (process.env.NODE_ENV === 'production') {
-    console.log("[Auth] Production Node Version:", process.version);
-    console.log("[Auth] NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
-    console.log("[Auth] AUTH_URL:", process.env.AUTH_URL);
-    console.log("[Auth] VERCEL_URL:", process.env.VERCEL_URL);
-    const hasSecret = !!(process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET);
-    console.log("[Auth] Has AUTH_SECRET:", hasSecret);
-    if (!hasSecret) {
-        console.error("[Auth] CRITICAL: AUTH_SECRET is missing in production!");
-    }
-    if (!process.env.EMAIL_SERVER_HOST) {
-        console.warn("[Auth] EMAIL_SERVER_HOST is missing - Magic Links will NOT send.");
-    }
-}
+console.log("[Auth] Initializing NextAuth...");
+console.log("[Auth] Environment Status:", {
+    NODE_ENV: process.env.NODE_ENV,
+    HAS_AUTH_SECRET: !!process.env.AUTH_SECRET,
+    HAS_NEXTAUTH_SECRET: !!process.env.NEXTAUTH_SECRET,
+    AUTH_URL: process.env.AUTH_URL,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST,
+});
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
@@ -48,6 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         Google({
             clientId: process.env.AUTH_GOOGLE_ID,
             clientSecret: process.env.AUTH_GOOGLE_SECRET,
+            allowDangerousEmailAccountLinking: true,
         }),
         Credentials({
             name: "Credentials",
@@ -76,8 +72,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     return null
                 }
 
-                const isPasswordCorrect = await require("bcryptjs").compare(
-                    credentials.password,
+                const isPasswordCorrect = await bcrypt.compare(
+                    credentials.password as string,
                     user.password
                 )
 
@@ -99,7 +95,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 hasToken: !!token,
                 hasUser: !!user,
                 hasAccount: !!account,
-                email: token.email
+                email: token.email,
+                provider: account?.provider,
+                type: account?.type
             });
 
             // Merge with Edge logic
@@ -141,4 +139,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return session
         },
     },
+    debug: true,
 })
