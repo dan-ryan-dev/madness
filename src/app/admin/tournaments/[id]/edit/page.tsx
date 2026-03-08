@@ -10,7 +10,7 @@ import { TournamentSetupChecklist } from "@/components/admin/TournamentSetupChec
 export default async function EditTournamentPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await auth()
     if (session?.user?.role !== "SUPER_ADMIN") {
-        redirect("/dashboard")
+        redirect("/admin")
     }
 
     const { id } = await params

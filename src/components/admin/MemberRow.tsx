@@ -3,6 +3,7 @@
 import { removeMember, saveTieBreaker } from "@/app/actions/group"
 import { Trash2, User as UserIcon, Save, Loader2 } from "lucide-react"
 import { useTransition, useState } from "react"
+import { EditUserModal } from "./EditUserModal"
 
 interface MemberRowProps {
     groupId: string
@@ -79,22 +80,26 @@ export function MemberRow({ groupId, player }: MemberRowProps) {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100/50 border border-gray-200/50">
-                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Pos</span>
-                        <span className="text-sm font-black text-brand-blue/60">{player.draftPosition || '-'}</span>
-                    </div>
+                <div className="flex items-center gap-2">
+                    <EditUserModal user={{ id: player.userId, name: player.user.name, email: player.user.email }} />
 
-                    {player.role !== 'ADMIN' && (
-                        <button
-                            onClick={handleRemove}
-                            disabled={isPending}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors disabled:opacity-50"
-                            title="Remove Member"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    )}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100/50 border border-gray-200/50">
+                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Pos</span>
+                            <span className="text-sm font-black text-brand-blue/60">{player.draftPosition || '-'}</span>
+                        </div>
+
+                        {player.role !== 'ADMIN' && (
+                            <button
+                                onClick={handleRemove}
+                                disabled={isPending}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors disabled:opacity-50"
+                                title="Remove Member"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 

@@ -273,8 +273,24 @@ export async function deleteUser(userId: string) {
 
 export async function updateUser(userId: string, data: { name?: string, email?: string }) {
     const session = await auth()
-    if (session?.user?.role !== "SUPER_ADMIN") {
+    const isSuperAdmin = session?.user?.role === "SUPER_ADMIN"
+    const isGroupAdmin = session?.user?.role === "GROUP_ADMIN"
+
+    if (!isSuperAdmin && !isGroupAdmin) {
         return { success: false, message: "Unauthorized" }
+    }
+
+    // For Group Admins, verify they manage a group containing this user
+    if (isGroupAdmin && !isSuperAdmin) {
+        const membershipCount = await prisma.groupMembership.count({
+            where: {
+                userId: userId,
+                group: { adminId: session?.user?.id }
+            }
+        })
+        if (membershipCount === 0) {
+            return { success: false, message: "Unauthorized: You can only edit players in your own groups." }
+        }
     }
 
     try {

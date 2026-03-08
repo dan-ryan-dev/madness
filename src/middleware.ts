@@ -24,7 +24,7 @@ export default auth((req) => {
     // Role-based access control
     if (isLoggedIn && isAdminRoute) {
         const userRole = req.auth?.user?.role
-        if (userRole !== "SUPER_ADMIN") {
+        if (userRole !== "SUPER_ADMIN" && userRole !== "GROUP_ADMIN") {
             // Redirect unauthorized users to dashboard
             return NextResponse.redirect(new URL("/dashboard", req.nextUrl))
         }

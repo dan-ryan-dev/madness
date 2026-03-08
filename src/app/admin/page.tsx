@@ -58,67 +58,67 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                 </div>
             </div>
 
-            <section className="space-y-4">
-                <div className="flex justify-between items-center border-b pb-2">
-                    <Link href="/admin/tournaments" className="group">
-                        <h2 className="text-xl font-semibold text-brand-dark group-hover:text-brand-blue transition-colors flex items-center gap-2">
-                            Tournaments
-                            <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </h2>
-                    </Link>
-                </div>
+            {isSuperAdmin && (
+                <section className="space-y-4">
+                    <div className="flex justify-between items-center border-b pb-2">
+                        <Link href="/admin/tournaments" className="group">
+                            <h2 className="text-xl font-semibold text-brand-dark group-hover:text-brand-blue transition-colors flex items-center gap-2">
+                                Tournaments
+                                <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </h2>
+                        </Link>
+                    </div>
 
-                {tournaments.length === 0 ? (
-                    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center space-y-4">
-                        <div className="mx-auto w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center">
-                            <AlertCircle className="w-6 h-6 text-gray-300" />
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-lg font-bold text-gray-900">No 2026 Tournament Found</p>
-                            <p className="text-sm text-gray-500">Click 'Initialize' to start your first tournament.</p>
-                        </div>
-                        {isSuperAdmin && (
+                    {tournaments.length === 0 ? (
+                        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center space-y-4">
+                            <div className="mx-auto w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center">
+                                <AlertCircle className="w-6 h-6 text-gray-300" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-lg font-bold text-gray-900">No 2026 Tournament Found</p>
+                                <p className="text-sm text-gray-500">Click 'Initialize' to start your first tournament.</p>
+                            </div>
                             <Link href="/admin/tournaments/new" className="inline-block bg-brand-orange text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors">
                                 Initialize
                             </Link>
-                        )}
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {tournaments.map((tournament) => (
-                            <div key={tournament.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center">
-                                <div>
-                                    <h3 className="font-bold text-gray-900">{tournament.name}</h3>
-                                    <p className="text-sm text-gray-500">Status: {tournament.status} • Year: {tournament.year}</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {tournaments.map((tournament) => (
+                                <div key={tournament.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center">
+                                    <div>
+                                        <h3 className="font-bold text-gray-900">{tournament.name}</h3>
+                                        <p className="text-sm text-gray-500">Status: {tournament.status} • Year: {tournament.year}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Link href={`/admin/tournaments/${tournament.id}/edit`} className="text-sm border border-gray-300 px-3 py-1.5 rounded hover:bg-gray-50 text-gray-700">
+                                            Edit
+                                        </Link>
+                                        <Link
+                                            href={tournament._count?.teams > 0 ? `/admin/tournaments/${tournament.id}/games` : '#'}
+                                            className={`text-sm border px-3 py-1.5 rounded transition-colors ${tournament._count?.teams > 0
+                                                ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                : 'border-gray-200 text-gray-300 cursor-not-allowed hidden'
+                                                }`}
+                                        >
+                                            Manage Games
+                                        </Link>
+                                        <Link
+                                            href={tournament._count?.teams > 0 ? `/admin/tournaments/${tournament.id}/teams` : `/admin/tournaments/${tournament.id}/import`}
+                                            className={`text-sm border px-3 py-1.5 rounded transition-colors ${tournament._count?.teams > 0
+                                                ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                : 'border-brand-orange text-brand-orange hover:bg-orange-50'
+                                                }`}
+                                        >
+                                            {tournament._count?.teams > 0 ? "View Teams" : "Import Teams"}
+                                        </Link>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Link href={`/admin/tournaments/${tournament.id}/edit`} className="text-sm border border-gray-300 px-3 py-1.5 rounded hover:bg-gray-50 text-gray-700">
-                                        Edit
-                                    </Link>
-                                    <Link
-                                        href={tournament._count?.teams > 0 ? `/admin/tournaments/${tournament.id}/games` : '#'}
-                                        className={`text-sm border px-3 py-1.5 rounded transition-colors ${tournament._count?.teams > 0
-                                            ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                            : 'border-gray-200 text-gray-300 cursor-not-allowed hidden'
-                                            }`}
-                                    >
-                                        Manage Games
-                                    </Link>
-                                    <Link
-                                        href={tournament._count?.teams > 0 ? `/admin/tournaments/${tournament.id}/teams` : `/admin/tournaments/${tournament.id}/import`}
-                                        className={`text-sm border px-3 py-1.5 rounded transition-colors ${tournament._count?.teams > 0
-                                            ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                            : 'border-brand-orange text-brand-orange hover:bg-orange-50'
-                                            }`}
-                                    >
-                                        {tournament._count?.teams > 0 ? "View Teams" : "Import Teams"}
-                                    </Link>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section>
+                            ))}
+                        </div>
+                    )}
+                </section>
+            )}
 
             {isSuperAdmin && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

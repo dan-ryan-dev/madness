@@ -7,11 +7,11 @@ import { ManagerInvitationForm } from "@/components/admin/ManagerInvitationForm"
 
 export default async function TournamentManagersPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await auth()
-
-    // Auth Check: Super Admin only
-    if (session?.user?.role !== "SUPER_ADMIN") {
-        redirect("/admin")
+    if (!session?.user?.role || !["SUPER_ADMIN", "GROUP_ADMIN"].includes(session.user.role)) {
+        redirect("/dashboard")
     }
+
+    const isSuperAdmin = session.user.role === "SUPER_ADMIN"
 
     const { id } = await params
     const tournament = await prisma.tournament.findUnique({
@@ -65,18 +65,30 @@ export default async function TournamentManagersPage({ params }: { params: Promi
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Invitation Tool */}
                 <div className="lg:col-span-2 space-y-6">
-                    <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 bg-gray-50">
-                            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <ShieldCheck className="w-5 h-5 text-brand-blue" />
-                                Bulk Invite Managers
-                            </h2>
-                            <p className="text-sm text-gray-500">Add group managers and send them their sign-in credentials.</p>
-                        </div>
-                        <div className="p-6">
-                            <ManagerInvitationForm tournamentId={id} />
-                        </div>
-                    </section>
+                    {isSuperAdmin ? (
+                        <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="p-6 border-b border-gray-100 bg-gray-50">
+                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <ShieldCheck className="w-5 h-5 text-brand-blue" />
+                                    Bulk Invite Managers
+                                </h2>
+                                <p className="text-sm text-gray-500">Add group managers and send them their sign-in credentials.</p>
+                            </div>
+                            <div className="p-6">
+                                <ManagerInvitationForm tournamentId={id} />
+                            </div>
+                        </section>
+                    ) : (
+                        <section className="bg-brand-blue/5 rounded-2xl p-8 border border-brand-blue/10 flex flex-col items-center justify-center text-center space-y-4">
+                            <ShieldCheck className="w-12 h-12 text-brand-blue/40" />
+                            <div className="space-y-1">
+                                <h3 className="text-lg font-bold text-brand-dark">Manager Access Level</h3>
+                                <p className="text-sm text-gray-500 max-w-sm">
+                                    As a Group Admin, you can view the active manager list, but tournament-wide invitations are restricted to Super Admins.
+                                </p>
+                            </div>
+                        </section>
+                    )}
                 </div>
 
                 {/* Sidebar: Current Managers List */}
@@ -112,11 +124,13 @@ export default async function TournamentManagersPage({ params }: { params: Promi
                                 ))
                             )}
                         </div>
-                        <div className="p-4 bg-gray-50 border-t border-gray-100">
-                            <Link href="/admin/users" className="text-xs font-bold text-brand-blue hover:underline flex items-center justify-center gap-1">
-                                View All Users <ArrowRight className="w-3 h-3" />
-                            </Link>
-                        </div>
+                        {isSuperAdmin && (
+                            <div className="p-4 bg-gray-50 border-t border-gray-100">
+                                <Link href="/admin/users" className="text-xs font-bold text-brand-blue hover:underline flex items-center justify-center gap-1">
+                                    View All Users <ArrowRight className="w-3 h-3" />
+                                </Link>
+                            </div>
+                        )}
                     </section>
                 </div>
             </div>
