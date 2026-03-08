@@ -1,6 +1,7 @@
 "use client"
 
 import { removeMember, saveTieBreaker } from "@/app/actions/group"
+import { updateMemberOrder } from "@/app/actions/admin"
 import { Trash2, User as UserIcon, Save, Loader2 } from "lucide-react"
 import { useTransition, useState } from "react"
 import { EditUserModal } from "./EditUserModal"
@@ -20,9 +21,10 @@ interface MemberRowProps {
         finalScoreGuess: number | null
         nitWinnerGuess: string | null
     }
+    isDraftComplete?: boolean
 }
 
-export function MemberRow({ groupId, player }: MemberRowProps) {
+export function MemberRow({ groupId, player, isDraftComplete }: MemberRowProps) {
     const [isPending, startTransition] = useTransition()
     const [nitWinner, setNitWinner] = useState(player.nitWinnerGuess || "")
     const [finalScore, setFinalScore] = useState(player.finalScoreGuess?.toString() || "")
@@ -30,6 +32,8 @@ export function MemberRow({ groupId, player }: MemberRowProps) {
     const [tbSaved, setTbSaved] = useState(false)
 
     const handleRemove = async () => {
+        if (isDraftComplete) return
+
         if (!confirm(`Are you sure you want to remove ${player.user.name || player.user.email}? This will delete their draft picks.`)) {
             return
         }
@@ -84,17 +88,38 @@ export function MemberRow({ groupId, player }: MemberRowProps) {
                     <EditUserModal user={{ id: player.userId, name: player.user.name, email: player.user.email }} />
 
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100/50 border border-gray-200/50">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-200 shadow-sm">
                             <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Pos</span>
-                            <span className="text-sm font-black text-brand-blue/60">{player.draftPosition || '-'}</span>
+                            <select
+                                value={player.draftPosition}
+                                onChange={async (e) => {
+                                    const newPos = parseInt(e.target.value)
+                                    if (newPos === player.draftPosition) return
+
+                                    startTransition(async () => {
+                                        const result = await updateMemberOrder(groupId, player.userId, newPos)
+                                        if (!result.success) {
+                                            alert(result.message)
+                                        }
+                                    })
+                                }}
+                                disabled={isPending || isDraftComplete}
+                                className={`text-sm font-black text-brand-blue bg-transparent outline-none p-0 focus:ring-0 ${isDraftComplete ? 'cursor-not-allowed opacity-50' : 'cursor-pointer border-none'}`}
+                            >
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map(pos => (
+                                    <option key={pos} value={pos}>{pos}</option>
+                                ))}
+                                {player.draftPosition === 0 && <option value="0">-</option>}
+                            </select>
+                            {isPending && <Loader2 className="w-3 h-3 text-brand-blue animate-spin" />}
                         </div>
 
                         {player.role !== 'ADMIN' && (
                             <button
                                 onClick={handleRemove}
-                                disabled={isPending}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors disabled:opacity-50"
-                                title="Remove Member"
+                                disabled={isPending || isDraftComplete}
+                                className={`p-2 rounded transition-colors disabled:opacity-50 ${isDraftComplete ? 'text-gray-300 cursor-not-allowed' : 'text-red-500 hover:text-red-700 hover:bg-red-50'}`}
+                                title={isDraftComplete ? "Draft complete - removal disabled" : "Remove Member"}
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -102,6 +127,12 @@ export function MemberRow({ groupId, player }: MemberRowProps) {
                     </div>
                 </div>
             </div>
+
+            {isDraftComplete && (
+                <p className="text-[10px] font-bold text-brand-blue/60 bg-blue-50/50 px-2 py-1 rounded inline-flex items-center gap-1.5 self-start">
+                    <Loader2 className="w-3 h-3" /> Draft complete - management locked
+                </p>
+            )}
 
             {/* Tie-Breaker Section */}
             <div className="flex flex-wrap items-end gap-4 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">

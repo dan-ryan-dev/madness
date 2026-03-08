@@ -2,19 +2,35 @@
 
 import { updateGroup } from "@/app/actions/group"
 import { useActionState } from "react"
-import { Plus, Save } from "lucide-react"
+import { Plus, Save, Loader2 } from "lucide-react"
 
 const initialState = {
     success: false,
     message: "",
 }
 
-export function EditGroupForm({ group }: { group: any }) {
+export function EditGroupForm({ group, isDraftComplete }: { group: any, isDraftComplete?: boolean }) {
     const [state, formAction, isPending] = useActionState(updateGroup, initialState)
 
     return (
         <form action={formAction} className="space-y-8">
             <input type="hidden" name="groupId" value={group.id} />
+
+            {/* Post-Draft Warning */}
+            {isDraftComplete && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <div>
+                        <h3 className="text-amber-900 font-bold">Drafting is Complete</h3>
+                        <p className="text-sm text-amber-700 max-w-md mx-auto">
+                            Member management is locked, but <strong>you can still record and update tiebreakers</strong> for each player below.
+                            To make changes to the roster, you must delete this group and start a new one.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Group Name */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -34,8 +50,8 @@ export function EditGroupForm({ group }: { group: any }) {
                 </div>
             </div>
 
-            {/* Invite New Users (Only if < 8 members) */}
-            {group.memberships.length < 8 ? (
+            {/* Invite New Users (Only if < 8 members and draft NOT complete) */}
+            {group.memberships.length < 8 && !isDraftComplete ? (
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Plus className="w-5 h-5 text-brand-blue" />

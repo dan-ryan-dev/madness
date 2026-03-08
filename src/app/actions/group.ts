@@ -240,6 +240,14 @@ export async function removeMember(groupId: string, userId: string) {
         return { success: false, message: "Unauthorized" }
     }
 
+    // Safeguard: Check if draft is complete
+    const pickCount = await prisma.draftPick.count({
+        where: { groupId }
+    })
+    if (pickCount >= 64) {
+        return { success: false, message: "Draft is complete. Members cannot be removed." }
+    }
+
     try {
         await prisma.groupMembership.delete({
             where: {
@@ -280,6 +288,22 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
                 })
             }
 
+            // Get current positions to find the next available ones
+            const currentMemberships = await tx.groupMembership.findMany({
+                where: { groupId: groupId },
+                select: { draftPosition: true }
+            })
+            const takenPositions = currentMemberships.map(m => m.draftPosition)
+
+            // Find first available position 1-8
+            let availablePos = 1
+            for (let p = 1; p <= 8; p++) {
+                if (!takenPositions.includes(p)) {
+                    availablePos = p
+                    break
+                }
+            }
+
             // Check membership
             const existing = await tx.groupMembership.findUnique({
                 where: { userId_groupId: { userId: user.id, groupId: groupId } }
@@ -287,7 +311,12 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
 
             if (!existing) {
                 await tx.groupMembership.create({
-                    data: { userId: user.id, groupId: groupId, role: "MEMBER" }
+                    data: {
+                        userId: user.id,
+                        groupId: groupId,
+                        role: "MEMBER",
+                        draftPosition: availablePos
+                    }
                 })
             }
 

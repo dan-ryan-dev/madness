@@ -63,21 +63,52 @@ export async function updateMemberOrder(groupId: string, userId: string, positio
         return { success: false, message: "Invalid position number (1-64)" }
     }
 
+    // Safeguard: Check if draft is complete
+    const pickCount = await prisma.draftPick.count({
+        where: { groupId }
+    })
+    if (pickCount >= 64) {
+        return { success: false, message: "Draft is complete. Member positions are locked." }
+    }
+
     try {
-        await prisma.groupMembership.update({
-            where: {
-                userId_groupId: {
-                    userId,
-                    groupId
+        await prisma.$transaction(async (tx) => {
+            // 1. Find the current occupant of the target position
+            const occupant = await tx.groupMembership.findFirst({
+                where: {
+                    groupId,
+                    draftPosition: posInt
                 }
-            },
-            data: {
-                draftPosition: posInt
+            })
+
+            // 2. Find the current position of the user we are moving
+            const movingUser = await tx.groupMembership.findUnique({
+                where: {
+                    userId_groupId: { userId, groupId }
+                }
+            })
+
+            if (!movingUser) throw new Error("User not found in group")
+
+            // 3. If there's an occupant, move them to the moving user's old position (SWAP)
+            if (occupant && occupant.userId !== userId) {
+                await tx.groupMembership.update({
+                    where: { id: occupant.id },
+                    data: { draftPosition: movingUser.draftPosition }
+                })
             }
+
+            // 4. Update the moving user to the new position
+            await tx.groupMembership.update({
+                where: {
+                    userId_groupId: { userId, groupId }
+                },
+                data: { draftPosition: posInt }
+            })
         })
 
         revalidatePath(`/admin/groups/${groupId}/edit`)
-        return { success: true, message: "Position updated" }
+        return { success: true, message: "Positions swapped successfully" }
     } catch (e) {
         console.error("Update member order error:", e)
         return { success: false, message: "Failed to update position" }

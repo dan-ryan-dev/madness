@@ -30,6 +30,11 @@ export default async function EditGroupPage({ params }: { params: Promise<{ id: 
         return <div className="p-8 text-center text-red-500">Group not found</div>
     }
 
+    const pickCount = await prisma.draftPick.count({
+        where: { groupId: id }
+    })
+    const isDraftComplete = pickCount >= 64
+
     return (
         <div className="container mx-auto py-8 px-4 max-w-4xl">
             <Link href="/admin/groups" className="text-gray-500 hover:text-gray-900 mb-6 inline-flex items-center gap-2">
@@ -51,14 +56,19 @@ export default async function EditGroupPage({ params }: { params: Promise<{ id: 
 
             <div className="grid gap-8">
                 {/* Main Edit Form */}
-                <EditGroupForm group={group} />
+                <EditGroupForm group={group} isDraftComplete={isDraftComplete} />
 
                 {/* Existing Members List (Separate from form to allow individual deletes) */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Members ({group.memberships.length})</h2>
                     <div className="space-y-3">
                         {group.memberships.map((membership: any) => (
-                            <MemberRow key={membership.id} groupId={group.id} player={membership} />
+                            <MemberRow
+                                key={membership.id}
+                                groupId={group.id}
+                                player={membership}
+                                isDraftComplete={isDraftComplete}
+                            />
                         ))}
                     </div>
                 </div>
