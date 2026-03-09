@@ -1,11 +1,12 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import prisma from "@/lib/prisma"
-import { ArrowLeft, Save, Trophy, Users } from "lucide-react"
+import { ArrowLeft, Save, Trophy, Users, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { updateTournament, deleteTournament } from "@/app/actions/tournament"
 import { DeleteAdminItem } from "@/components/admin/DeleteAdminItem"
 import { TournamentSetupChecklist } from "@/components/admin/TournamentSetupChecklist"
+import { HealScoresButton } from "@/components/admin/HealScoresButton"
 
 export default async function EditTournamentPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await auth()
@@ -137,6 +138,22 @@ export default async function EditTournamentPage({ params }: { params: Promise<{
                             status: tournament.status
                         }}
                     />
+
+                    {/* Maintenance Section */}
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center gap-3">
+                            <div className="p-2 bg-brand-orange/10 rounded-lg">
+                                <Sparkles className="w-5 h-5 text-brand-orange" />
+                            </div>
+                            <h2 className="text-lg font-black uppercase tracking-tight text-brand-blue">Maintenance</h2>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-sm text-gray-500 mb-6 font-medium leading-relaxed">
+                                Use the scoring audit to repair any point anomalies or sync issues across all groups in this tournament.
+                            </p>
+                            <HealScoresButton tournamentId={id} />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

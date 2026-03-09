@@ -129,22 +129,12 @@ export async function revertGameResult(gameResultId: string) {
 
             // 3. Calculate Points to Revert
             const round = gameResult.round
-            const basePoints = Math.pow(2, round - 1)
-
-            const getBracket = (seed: number) => {
-                if (seed >= 1 && seed <= 3) return 1
-                if (seed >= 4 && seed <= 6) return 2
-                if (seed >= 7 && seed <= 9) return 3
-                if (seed >= 10 && seed <= 12) return 4
-                if (seed >= 13 && seed <= 15) return 5
-                if (seed === 16) return 6
-                return 1
-            }
+            const basePoints = ROUND_POINTS[round] || 0
 
             let upsetBonus = 0
             if (gameResult.winner && gameResult.loser) {
-                const winnerBracket = getBracket(gameResult.winner.seed)
-                const loserBracket = getBracket(gameResult.loser.seed)
+                const winnerBracket = getSeedBracket(gameResult.winner.seed)
+                const loserBracket = getSeedBracket(gameResult.loser.seed)
                 upsetBonus = Math.max(0, winnerBracket - loserBracket)
             }
 

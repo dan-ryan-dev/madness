@@ -4,6 +4,69 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { getBaseUrl } from "@/lib/utils"
+import { calculatePlayerScore } from "@/lib/scoring"
+
+export async function recalculateTournamentScores(tournamentId: string) {
+    const session = await auth()
+    if (session?.user?.role !== "SUPER_ADMIN") {
+        return { success: false, message: "Unauthorized" }
+    }
+
+    try {
+        // 1. Fetch all tournament context
+        const tournament = await prisma.tournament.findUnique({
+            where: { id: tournamentId },
+            include: {
+                gameResults: {
+                    include: { winner: true, loser: true }
+                },
+                groups: {
+                    include: {
+                        memberships: true,
+                        draftPicks: {
+                            include: { team: true }
+                        }
+                    }
+                }
+            }
+        })
+
+        if (!tournament) throw new Error("Tournament not found")
+
+        let updatedCount = 0
+
+        // 2. Iterate through every group and member
+        await prisma.$transaction(async (tx) => {
+            for (const group of tournament.groups) {
+                for (const member of group.memberships) {
+                    const memberPicks = group.draftPicks.filter(p => p.userId === member.userId).map(p => p.team)
+
+                    const newScore = calculatePlayerScore(memberPicks, tournament.gameResults as any)
+
+                    if (member.score !== newScore) {
+                        await tx.groupMembership.update({
+                            where: { id: member.id },
+                            data: { score: newScore }
+                        })
+                        updatedCount++
+                    }
+                }
+            }
+        })
+
+        revalidatePath(`/standings`)
+        revalidatePath(`/admin/tournaments/${tournamentId}/manage`)
+
+        return {
+            success: true,
+            message: `Scoring audit complete. Updated ${updatedCount} member scores.`
+        }
+
+    } catch (error) {
+        console.error("Recalculate scores error:", error)
+        return { success: false, message: "Failed to recalculate scores." }
+    }
+}
 
 export async function resetDraft(prevState: any, formData: FormData) {
     const session = await auth()
