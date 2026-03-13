@@ -1,13 +1,29 @@
 import { auth } from "@/auth"
+import prisma from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { PartyPopper, CheckCircle } from "lucide-react"
+import { PartyPopper, CheckCircle, ArrowRight } from "lucide-react"
 
 export default async function OnboardingPage() {
     const session = await auth()
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
         redirect("/api/auth/signin")
     }
+
+    // Find the user's primary group to provide a better redirect
+    const membership = await prisma.groupMembership.findFirst({
+        where: { userId: session.user.id },
+        include: { group: true },
+        orderBy: { joinedAt: "asc" }
+    })
+
+    const destination = membership
+        ? `/groups/${membership.groupId}/dashboard`
+        : "/"
+
+    const destinationLabel = membership
+        ? `Go to ${membership.group.name}`
+        : "Go to Home"
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -36,10 +52,11 @@ export default async function OnboardingPage() {
 
                 <div className="mt-8">
                     <a
-                        href="/dashboard"
-                        className="block w-full bg-brand-orange text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-colors"
+                        href={destination}
+                        className="flex items-center justify-center gap-2 w-full bg-brand-orange text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all hover:scale-[1.02]"
                     >
-                        Go to Dashboard
+                        {destinationLabel}
+                        <ArrowRight className="w-4 h-4" />
                     </a>
                 </div>
             </div>

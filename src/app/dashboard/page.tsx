@@ -1,4 +1,27 @@
-export default function Dashboard() {
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
+import { redirect } from "next/navigation";
+
+export default async function Dashboard() {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+        redirect("/api/auth/signin");
+    }
+
+    // Auto-redirect to the first group if it exists
+    const membership = await prisma.groupMembership.findFirst({
+        where: { userId: session.user.id }
+    });
+
+    if (membership) {
+        redirect(`/groups/${membership.groupId}/dashboard`);
+    }
+
+    // Final fallback if no groups exist
+    redirect("/");
+
+    // The rest of this is now essentially dead code, but kept for future reference if we want a global dash
     return (
         <div className="space-y-8">
             <h1 className="text-3xl font-bold text-brand-blue">My Dashboard</h1>
