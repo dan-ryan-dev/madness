@@ -10,21 +10,24 @@ type MemberWithUser = GroupMembership & {
     nitWinnerGuess?: string | null
 }
 
-export function LeaderboardCard({ members }: { members: MemberWithUser[] }) {
+export const LeaderboardCard = ({ members }: { members: MemberWithUser[] }) => {
     return (
-        <div className="bg-white/70 backdrop-blur-xl border border-white/20 shadow-lg rounded-2xl overflow-hidden flex flex-col h-full">
-            <div className="p-6 border-b border-gray-100/50 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+            <div className="bg-brand-blue px-6 py-4 flex items-center justify-between border-b border-white/10">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-brand-orange" />
                     Live Standings
                 </h2>
-                <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-orange opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-orange"></span>
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Live Updates</span>
+                </div>
             </div>
 
-            <div className="flex-1 overflow-auto">
+            <div className="overflow-x-auto flex-1">
                 <table className="w-full text-left">
                     <thead>
                         <tr className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -41,22 +44,25 @@ export function LeaderboardCard({ members }: { members: MemberWithUser[] }) {
                                 className={`hover:bg-white/40 transition-colors ${index < 3 ? 'bg-gradient-to-r from-orange-50/30 to-transparent' : ''}`}
                             >
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`font-bold text-lg w-6 text-center ${index === 0 ? 'text-brand-orange' : 'text-gray-500'}`}>
+                                    <div className="flex items-center justify-center">
+                                        <span className={`font-mono font-bold text-lg ${index < 3 ? 'text-gray-900' : 'text-gray-400 opacity-50'}`}>
                                             {member.rank}
                                         </span>
-                                        {/* Trend Indicator (Mock logic for now) */}
-                                        {index === 0 ? <TrendingUp className="w-4 h-4 text-green-500" /> :
-                                            index > 4 ? <TrendingDown className="w-4 h-4 text-red-500" /> :
-                                                <Minus className="w-4 h-4 text-gray-300" />}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 font-bold text-gray-900 flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${index === 0 ? 'bg-brand-orange text-white' : 'bg-gray-100 text-gray-600'}`}>
-                                        {member.user.name?.[0] || "U"}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span>{member.user.name}</span>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${index === 0 ? 'bg-brand-orange text-white' : 'bg-gray-100 text-gray-600'}`}>
+                                            {member.user.name?.[0] || "U"}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-gray-900 truncate">{member.user.name}</span>
+                                                {index === 0 && <Trophy className="w-4 h-4 text-[#FFD700] shrink-0" />}
+                                                {index === 1 && <Trophy className="w-4 h-4 text-[#C0C0C0] shrink-0" />}
+                                                {index === 2 && <Trophy className="w-4 h-4 text-[#CD7F32] shrink-0" />}
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-center">

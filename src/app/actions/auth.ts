@@ -77,12 +77,12 @@ export async function forgotPassword(prevState: any, formData: FormData) {
         await transporter.sendMail({
             to: email,
             from: process.env.EMAIL_FROM,
-            subject: "Reset your Madness 2026 Password",
+            subject: "Reset your Madness Password",
             text: `Click the link to reset your password: ${resetLink}`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
-                    <h2 style="color: #143278; text-align: center;">Madness 2026</h2>
-                    <p>You requested a password reset for your Madness 2026 account.</p>
+                    <h2 style="color: #143278; text-align: center;">Madness</h2>
+                    <p>You requested a password reset for your account.</p>
                     <p>Click the button below to set a new password. This link is valid for 1 hour.</p>
                     <div style="text-align: center; margin: 30px 0;">
                         <a href="${resetLink}" style="background-color: #F58220; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>

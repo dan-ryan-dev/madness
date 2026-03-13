@@ -6,6 +6,7 @@ import { ArrowLeft, Settings } from "lucide-react"
 import { RecentTicker } from "@/components/dashboard/RecentTicker"
 import { LeaderboardCard } from "@/components/dashboard/LeaderboardCard"
 import { GroupSelector } from "@/components/dashboard/GroupSelector"
+import { GlobalLeaderboardWidget } from "@/components/leaderboard/GlobalLeaderboardWidget"
 
 import prisma from "@/lib/prisma"
 
@@ -74,14 +75,16 @@ export default async function GroupDashboardPage({ params }: { params: Promise<{
             {/* Background Blob for aesthetic */}
             <div className="fixed top-0 left-0 w-full h-96 bg-gradient-to-b from-brand-blue to-[#F3F4F6] z-0 opacity-10 pointer-events-none"></div>
 
-            {/* Ticker */}
-            <div className="sticky top-0 z-50 shadow-md">
-                <RecentTicker results={group.tournament.gameResults} />
-            </div>
+            {/* Ticker (connected to bottom of main site header) */}
+            {group.tournament.gameResults.length > 0 && (
+                <div className="sticky top-[80px] z-[60] shadow-md border-b border-white/10">
+                    <RecentTicker results={group.tournament.gameResults} />
+                </div>
+            )}
 
-            <div className="relative z-10 pb-12">
+            <div className="relative z-10 pt-6">
                 {/* Header */}
-                <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-[53px] z-40">
+                <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-[152px] z-50">
                     <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <Link href="/admin/groups" className="text-gray-400 hover:text-gray-700 transition-colors">
@@ -108,15 +111,29 @@ export default async function GroupDashboardPage({ params }: { params: Promise<{
                     </div>
                 </header>
 
-                <main className="container mx-auto px-4 py-8 space-y-8">
-                    {/* Live Standings at the top */}
-                    <div className="max-w-4xl mx-auto">
-                        <LeaderboardCard members={memberStats} />
+                <main className="container mx-auto px-4 py-8 mt-6 space-y-12">
+                    <div className="grid lg:grid-cols-3 gap-8">
+                        {/* Main Content / Left Columns (2/3) */}
+                        <div className="lg:col-span-2 space-y-8 order-1 lg:order-1">
+                            <LeaderboardCard members={memberStats} />
+                        </div>
+
+                        {/* Sidebar / Right Column (1/3) */}
+                        <div className="lg:col-span-1 order-2 lg:order-2">
+                            <GlobalLeaderboardWidget
+                                tournamentId={group.tournamentId}
+                                isSticky={true}
+                            />
+                        </div>
                     </div>
 
-                    {/* Main Content: Rosters */}
-                    <div className="max-w-4xl mx-auto w-full">
-                        <div className="grid gap-6 md:grid-cols-2">
+                    {/* Full Width Rosters Section */}
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-3 px-1">
+                            <h3 className="text-sm font-black uppercase text-gray-400 tracking-widest">Player Teams & Rosters</h3>
+                            <div className="flex-1 h-px bg-gray-200"></div>
+                        </div>
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {[...memberStats].sort((a, b) => a.draftPosition - b.draftPosition).map((member) => {
                                 const picks = rosterMap.get(member.userId) || []
                                 picks.sort((a, b) => (a.round - b.round) || (a.pickNumber - b.pickNumber))

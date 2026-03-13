@@ -4,7 +4,7 @@ import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import nodemailer from "nodemailer"
-import { randomUUID } from "crypto"
+import { createHash, randomUUID } from "crypto"
 import { getBaseUrl } from "@/lib/utils"
 
 // Configure Nodemailer for development (logs to console if no real transport)
@@ -128,16 +128,21 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                 // 3. Generate Magic Link
                 const token = randomUUID()
                 const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
+                const host = getBaseUrl()
+                const secret = process.env.AUTH_SECRET || ""
+                // Auth.js v5 hashes the token before storing it in the DB
+                const hashedToken = createHash("sha256")
+                    .update(`${token}${secret}`)
+                    .digest("hex")
 
                 await tx.verificationToken.create({
                     data: {
                         identifier: player.email,
-                        token: token,
+                        token: hashedToken,
                         expires: expires
                     }
                 })
 
-                const host = getBaseUrl()
                 const magicLink = `${host}/api/auth/callback/nodemailer?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
 
                 // Don't email the admin if they created the group
@@ -154,16 +159,17 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
         })
 
         // 4. Send Emails
+        const displayTournamentName = tournament.name || "Madness 2026";
         for (const task of emailTasks) {
             const subject = task.isExisting
-                ? "You've been added to a new Madness 2026 Group!"
-                : "You've been invited to Madness 2026!"
+                ? `You've been added to a new ${displayTournamentName} Group!`
+                : `You've been invited to ${displayTournamentName}!`
 
             const html = `
                 <h1>Hello ${task.name},</h1>
-                <p><strong>${session.user.name}</strong> has added you to the group <strong>"${groupName}"</strong>.</p>
+                <p><strong>${session.user.name}</strong> has added you to the group <strong>"${groupName}"</strong> in <strong>${displayTournamentName}</strong>.</p>
                 <p>${task.isExisting ? "Log in to view your new group." : "Click below to join setup your account."}</p>
-                <a href="${task.magicLink}">Click here to access Madness 2026</a>
+                <a href="${task.magicLink}">Click here to access ${displayTournamentName}</a>
             `
 
             await transporter.sendMail({
@@ -171,7 +177,7 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                 to: task.email,
                 subject,
                 html,
-                text: `You have been added to group "${groupName}". Link: ${task.magicLink}`
+                text: `You have been added to group "${groupName}" in ${displayTournamentName}. Link: ${task.magicLink}`
             })
 
             console.log(`[EMAIL MOCK] To: ${task.email} | Existing: ${task.isExisting} | Link: ${task.magicLink}`)
@@ -222,7 +228,10 @@ export async function updateGroup(prevState: any, formData: FormData) {
             // Re-use logic or extract helper? 
             // For speed, let's inline a simplified version or extract the invite logic if I can.
             // Extracting logic is safer.
-            await invitePlayersToGroup(groupId, newPlayers, session.user.name || "Admin")
+            const tournament = await prisma.tournament.findUnique({
+                where: { id: (await prisma.group.findUnique({ where: { id: groupId }, select: { tournamentId: true } }))?.tournamentId }
+            })
+            await invitePlayersToGroup(groupId, newPlayers, session.user.name || "Admin", tournament?.name)
         }
 
         revalidatePath(`/admin/groups/${groupId}/edit`)
@@ -276,8 +285,9 @@ export async function removeMember(groupId: string, userId: string) {
     }
 }
 
-async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inviterName: string) {
+async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inviterName: string, tournamentName?: string) {
     const emailTasks: Array<{ email: string, magicLink: string, name: string }> = []
+    const displayTournamentName = tournamentName || "Madness 2026"
 
     await prisma.$transaction(async (tx) => {
         for (const player of players) {
@@ -323,11 +333,16 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
             // Magic Link
             const token = randomUUID()
             const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
+            const host = getBaseUrl()
+            const secret = process.env.AUTH_SECRET || ""
+            const hashedToken = createHash("sha256")
+                .update(`${token}${secret}`)
+                .digest("hex")
+
             await tx.verificationToken.create({
-                data: { identifier: player.email, token, expires }
+                data: { identifier: player.email, token: hashedToken, expires }
             })
 
-            const host = getBaseUrl()
             const magicLink = `${host}/api/auth/callback/nodemailer?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
 
             emailTasks.push({ email: player.email, magicLink, name: player.name })
@@ -337,11 +352,15 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
     // Send Emails
     for (const task of emailTasks) {
         const emailContent = {
-            from: "admin@madness2026.com",
+            from: process.env.EMAIL_FROM || "admin@madness2026.com",
             to: task.email,
-            subject: "You've been added to Madness 2026 Draft Pool!",
-            html: `<h1>Welcome, ${task.name}!</h1><p>${inviterName} invited you.</p><a href="${task.magicLink}">${task.magicLink}</a>`,
-            text: `Welcome! Join here: ${task.magicLink}`
+            subject: `You've been added to ${displayTournamentName} Draft Pool!`,
+            html: `
+                <h1>Welcome, ${task.name}!</h1>
+                <p>${inviterName} has added you to a group in <strong>${displayTournamentName}</strong>.</p>
+                <a href="${task.magicLink}">Click here to access ${displayTournamentName}</a>
+            `,
+            text: `Welcome! Join ${displayTournamentName} here: ${task.magicLink}`
         }
         await transporter.sendMail(emailContent)
         console.log(`[EMAIL MOCK] To: ${task.email} | Link: ${task.magicLink}`)

@@ -58,3 +58,23 @@ export function calculatePlayerScore(
 
     return totalScore;
 }
+/**
+ * Calculates the total points (base + upset) for a single game result.
+ */
+export function calculateGamePoints(game: GameResult & { winner: Team | null; loser: Team | null }): number {
+    if (!game.winner || !game.loser) return 0;
+
+    const basePoints = ROUND_POINTS[game.round] || 0;
+    const winnerSeed = game.winner.seed;
+    const loserSeed = game.loser.seed;
+
+    const winnerBracket = getSeedBracket(winnerSeed);
+    const loserBracket = getSeedBracket(loserSeed);
+
+    let upsetBonus = 0;
+    if (winnerBracket > loserBracket) {
+        upsetBonus = winnerBracket - loserBracket;
+    }
+
+    return basePoints + upsetBonus;
+}
