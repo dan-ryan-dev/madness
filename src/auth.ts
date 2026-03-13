@@ -23,9 +23,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
     trustHost: true,
     adapter: isBuildTime ? undefined : PrismaAdapter(prisma) as any,
-    secret: process.env.AUTH_SECRET,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
     providers: [
         Nodemailer({
+            id: "nodemailer",
             server: {
                 host: process.env.EMAIL_SERVER_HOST || "localhost",
                 port: parseInt(process.env.EMAIL_SERVER_PORT || "587"),

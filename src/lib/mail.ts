@@ -27,7 +27,11 @@ export async function generateMagicLink(email: string, callbackUrl: string = "/o
     const token = randomUUID()
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
     const host = getBaseUrl()
-    const secret = process.env.AUTH_SECRET || ""
+    const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || ""
+
+    if (!secret) {
+        console.warn("[Mail] WARNING: No AUTH_SECRET or NEXTAUTH_SECRET found. Magic links may fail verification.")
+    }
 
     // 2. Hash token exactly as Auth.js v5 expects
     // Auth.js v5 uses sha256 with the secret appended to the token
