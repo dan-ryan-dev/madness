@@ -209,7 +209,6 @@ export async function searchUsers(query: string) {
 }
 import { transporter } from "@/lib/mail"
 import bcrypt from "bcryptjs"
-import { v4 as uuidv4 } from "uuid"
 
 
 export async function inviteManagers(tournamentId: string, managers: { name: string, email: string }[], sendEmails: boolean = false) {

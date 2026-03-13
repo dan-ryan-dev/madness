@@ -298,27 +298,15 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
                 })
             }
 
-            // Magic Link
-            const token = randomUUID()
-            const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
-            const host = getBaseUrl()
-            const secret = process.env.AUTH_SECRET || ""
-            const hashedToken = createHash("sha256")
-                .update(`${token}${secret}`)
-                .digest("hex")
-
-            await tx.verificationToken.create({
-                data: { identifier: player.email, token: hashedToken, expires }
-            })
-
-            const magicLink = `${host}/api/auth/callback/nodemailer?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
+            // 3. Magic Link using standardized helper
+            const { magicLink } = await generateMagicLink(player.email)
 
             emailTasks.push({ email: player.email, magicLink, name: player.name })
         }
     })
 
-    // Send Emails
-    for (const task of emailTasks) {
+    // 4. Send Emails in PARALLEL
+    await Promise.allSettled(emailTasks.map(async (task) => {
         const emailContent = {
             from: process.env.EMAIL_FROM || "admin@madness2026.com",
             to: task.email,
@@ -336,7 +324,7 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
         } catch (emailError: any) {
             console.error(`[EMAIL FAILED] Failed to send to ${task.email}:`, emailError)
         }
-    }
+    }))
 }
 
 export async function deleteGroup(groupId: string) {
