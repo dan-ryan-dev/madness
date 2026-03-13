@@ -23,22 +23,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
     trustHost: true,
     adapter: isBuildTime ? undefined : PrismaAdapter(prisma) as any,
+    secret: process.env.AUTH_SECRET,
     providers: [
         Nodemailer({
             server: {
                 host: process.env.EMAIL_SERVER_HOST || "localhost",
                 port: parseInt(process.env.EMAIL_SERVER_PORT || "587"),
                 auth: {
-                    user: process.env.EMAIL_SERVER_USER || "user",
-                    pass: process.env.EMAIL_SERVER_PASSWORD || "pass",
+                    user: process.env.EMAIL_SERVER_USER,
+                    pass: process.env.EMAIL_SERVER_PASSWORD,
                 },
             },
-            from: process.env.EMAIL_FROM || "noreply@example.com",
-            ...(process.env.EMAIL_SERVER_HOST ? {} : {
+            from: process.env.EMAIL_FROM || "admin@madness2026.com",
+            // If no EMAIL_SERVER_HOST, provide a custom sendVerificationRequest for local testing
+            ...(!process.env.EMAIL_SERVER_HOST ? {
                 async sendVerificationRequest({ identifier: email, url }) {
                     console.log(`[NextAuth] Login Link for ${email}: ${url}`)
                 }
-            })
+            } : {})
         }),
         Google({
             clientId: process.env.AUTH_GOOGLE_ID,

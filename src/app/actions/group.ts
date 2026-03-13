@@ -3,27 +3,9 @@
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import nodemailer from "nodemailer"
-import { createHash, randomUUID } from "crypto"
+import { transporter, generateMagicLink } from "@/lib/mail"
 import { getBaseUrl } from "@/lib/utils"
 
-// Configure Nodemailer for development (logs to console if no real transport)
-// For a real app, use SendGrid/Resend/AWS SES
-// Configure Nodemailer
-const transporter = nodemailer.createTransport(
-    (process.env.EMAIL_SERVER_HOST
-        ? {
-            host: process.env.EMAIL_SERVER_HOST,
-            port: parseInt(process.env.EMAIL_SERVER_PORT || "587"),
-            auth: {
-                user: process.env.EMAIL_SERVER_USER,
-                pass: process.env.EMAIL_SERVER_PASSWORD,
-            },
-        }
-        : {
-            jsonTransport: true,
-        }) as any
-)
 
 interface PlayerInput {
     name: string
@@ -125,25 +107,8 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                     }
                 })
 
-                // 3. Generate Magic Link
-                const token = randomUUID()
-                const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
-                const host = getBaseUrl()
-                const secret = process.env.AUTH_SECRET || ""
-                // Auth.js v5 hashes the token before storing it in the DB
-                const hashedToken = createHash("sha256")
-                    .update(`${token}${secret}`)
-                    .digest("hex")
-
-                await tx.verificationToken.create({
-                    data: {
-                        identifier: player.email,
-                        token: hashedToken,
-                        expires: expires
-                    }
-                })
-
-                const magicLink = `${host}/api/auth/callback/nodemailer?token=${token}&email=${encodeURIComponent(player.email)}&callbackUrl=${encodeURIComponent("/onboarding")}`
+                // 3. Generate Magic Link using standardized helper
+                const { magicLink } = await generateMagicLink(player.email)
 
                 // Don't email the admin if they created the group
                 if (user.email !== session.user.email) {
@@ -158,9 +123,9 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
             return group
         })
 
-        // 4. Send Emails
+        // 4. Send Emails in PARALLEL to prevent timeout
         const displayTournamentName = tournament.name || "Madness 2026";
-        for (const task of emailTasks) {
+        await Promise.allSettled(emailTasks.map(async (task) => {
             const subject = task.isExisting
                 ? `You've been added to a new ${displayTournamentName} Group!`
                 : `You've been invited to ${displayTournamentName}!`
@@ -183,10 +148,8 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                 console.log(`[EMAIL SENT] To: ${task.email} | Existing: ${task.isExisting} | Link: ${task.magicLink}`)
             } catch (emailError: any) {
                 console.error(`[EMAIL FAILED] Failed to send to ${task.email}:`, emailError)
-                // We don't throw here to avoid failing the whole group creation if one email fails
-                // but since this is inside the loop after the transaction, it's safer.
             }
-        }
+        }))
 
         revalidatePath("/admin/groups")
         return { success: true, message: `Group "${groupName}" created successfully with 8 players.`, groupId: group.id }

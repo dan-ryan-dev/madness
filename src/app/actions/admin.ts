@@ -207,25 +207,10 @@ export async function searchUsers(query: string) {
         return []
     }
 }
-import { createTransport } from "nodemailer"
+import { transporter } from "@/lib/mail"
 import bcrypt from "bcryptjs"
 import { v4 as uuidv4 } from "uuid"
 
-// Transport setup for Nodemailer
-const transporter = createTransport(
-    (process.env.EMAIL_SERVER_HOST
-        ? {
-            host: process.env.EMAIL_SERVER_HOST,
-            port: parseInt(process.env.EMAIL_SERVER_PORT || "587"),
-            auth: {
-                user: process.env.EMAIL_SERVER_USER,
-                pass: process.env.EMAIL_SERVER_PASSWORD,
-            },
-        }
-        : {
-            jsonTransport: true,
-        }) as any
-)
 
 export async function inviteManagers(tournamentId: string, managers: { name: string, email: string }[], sendEmails: boolean = false) {
     const session = await auth()

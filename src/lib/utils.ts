@@ -17,5 +17,5 @@ export function getBaseUrl() {
     url = "http://localhost:3000";
   }
 
-  return url;
+  return url.replace(/\/$/, "");
 }
