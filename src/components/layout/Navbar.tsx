@@ -34,7 +34,7 @@ export async function Navbar() {
     }
 
     return (
-        <nav className="bg-brand-blue text-white p-4 sticky top-0 z-50 shadow-md backdrop-blur-md bg-opacity-90">
+        <nav className="bg-brand-blue text-white p-4 sticky top-0 z-[70] shadow-md backdrop-blur-md bg-opacity-90">
             <div className="container mx-auto flex justify-between items-center">
                 <div className="flex items-center gap-6">
                     <Link href="/" className="text-xl font-black flex items-center gap-2 tracking-tighter hover:text-brand-orange transition-colors">

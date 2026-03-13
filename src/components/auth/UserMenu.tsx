@@ -31,7 +31,7 @@ export async function UserMenu() {
             </div>
 
             {/* Dropdown - Simple CSS hover for MVP */}
-            <div className="absolute top-full right-0 pt-2 w-48 hidden group-hover:block z-50">
+            <div className="absolute top-full right-0 pt-2 w-48 hidden group-hover:block z-[80]">
                 <div className="bg-white rounded-md shadow-lg border border-gray-100 py-1">
                     <div className="px-4 py-2 border-b border-gray-100">
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
