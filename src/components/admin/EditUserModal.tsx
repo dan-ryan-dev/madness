@@ -18,7 +18,8 @@ export function EditUserModal({ user }: EditUserModalProps) {
     const [error, setError] = useState<string | null>(null)
     const [formData, setFormData] = useState({
         name: user.name || "",
-        email: user.email || ""
+        email: user.email || "",
+        password: ""
     })
 
     const handleUpdate = async (e: React.FormEvent) => {
@@ -30,6 +31,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
             const result = await updateUser(user.id, formData)
             if (result.success) {
                 setIsOpen(false)
+                setFormData(prev => ({ ...prev, password: "" }))
             } else {
                 setError(result.message || "Failed to update")
             }
@@ -89,6 +91,19 @@ export function EditUserModal({ user }: EditUserModalProps) {
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
                                     placeholder="Enter email address"
                                 />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">New Password (Optional)</label>
+                                <input
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
+                                    placeholder="Enter new password"
+                                    minLength={8}
+                                />
+                                <p className="text-[10px] text-gray-400 ml-1 italic">Leave blank to keep existing password.</p>
                             </div>
 
                             <div className="pt-4 flex gap-3">

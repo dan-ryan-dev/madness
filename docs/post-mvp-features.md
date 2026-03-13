@@ -16,6 +16,7 @@ This document tracks planned improvements and feature requests for future develo
 ## 3. Administration & Cleanup
 - **Practice Group Auto-Cleanup**: Automated system to purge "Test" or "Practice" groups after a certain date or upon tournament start.
 - **Bulk User Management**: Tools for Super Admins to manage large groups of users more efficiently (e.g., bulk role updates or password resets).
+- **Force Password Change**: Implementation of a 'requirePasswordReset' flag for users, compelling them to set a new private password upon their first login after an admin-driven change.
 
 ## 4. Scoring Refinements
 - **Late Group Logic**: Refine how groups created after the first round has started are scored, potentially including point penalties or restricted team pools.

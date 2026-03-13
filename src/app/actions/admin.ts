@@ -355,7 +355,7 @@ export async function deleteUser(userId: string) {
     }
 }
 
-export async function updateUser(userId: string, data: { name?: string, email?: string }) {
+export async function updateUser(userId: string, data: { name?: string, email?: string, password?: string }) {
     const session = await auth()
     const isSuperAdmin = session?.user?.role === "SUPER_ADMIN"
     const isGroupAdmin = session?.user?.role === "GROUP_ADMIN"
@@ -381,6 +381,10 @@ export async function updateUser(userId: string, data: { name?: string, email?: 
         const updateData: any = {}
         if (data.name) updateData.name = data.name.trim()
         if (data.email) updateData.email = data.email.toLowerCase().trim()
+        
+        if (data.password && data.password.trim() !== "") {
+            updateData.password = await bcrypt.hash(data.password, 10)
+        }
 
         await prisma.user.update({
             where: { id: userId },
