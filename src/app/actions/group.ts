@@ -172,15 +172,20 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                 <a href="${task.magicLink}">Click here to access ${displayTournamentName}</a>
             `
 
-            await transporter.sendMail({
-                from: process.env.EMAIL_FROM || "admin@madness2026.com",
-                to: task.email,
-                subject,
-                html,
-                text: `You have been added to group "${groupName}" in ${displayTournamentName}. Link: ${task.magicLink}`
-            })
-
-            console.log(`[EMAIL MOCK] To: ${task.email} | Existing: ${task.isExisting} | Link: ${task.magicLink}`)
+            try {
+                await transporter.sendMail({
+                    from: process.env.EMAIL_FROM || "admin@madness2026.com",
+                    to: task.email,
+                    subject,
+                    html,
+                    text: `You have been added to group "${groupName}" in ${displayTournamentName}. Link: ${task.magicLink}`
+                })
+                console.log(`[EMAIL SENT] To: ${task.email} | Existing: ${task.isExisting} | Link: ${task.magicLink}`)
+            } catch (emailError: any) {
+                console.error(`[EMAIL FAILED] Failed to send to ${task.email}:`, emailError)
+                // We don't throw here to avoid failing the whole group creation if one email fails
+                // but since this is inside the loop after the transaction, it's safer.
+            }
         }
 
         revalidatePath("/admin/groups")
@@ -362,8 +367,12 @@ async function invitePlayersToGroup(groupId: string, players: PlayerInput[], inv
             `,
             text: `Welcome! Join ${displayTournamentName} here: ${task.magicLink}`
         }
-        await transporter.sendMail(emailContent)
-        console.log(`[EMAIL MOCK] To: ${task.email} | Link: ${task.magicLink}`)
+        try {
+            await transporter.sendMail(emailContent)
+            console.log(`[EMAIL SENT] To: ${task.email} | Link: ${task.magicLink}`)
+        } catch (emailError: any) {
+            console.error(`[EMAIL FAILED] Failed to send to ${task.email}:`, emailError)
+        }
     }
 }
 
