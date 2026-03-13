@@ -172,15 +172,13 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col relative font-sans">
                 {/* Ticker (connected to bottom of main site header) */}
-                {activeTournament?.gameResults && activeTournament.gameResults.length > 0 && (
-                    <div className="sticky top-[80px] z-[60] shadow-md border-b border-white/10">
-                        <RecentTicker results={activeTournament.gameResults} />
-                    </div>
-                )}
+                <div className="sticky top-[64px] z-[60] shadow-md border-b border-white/10">
+                    <RecentTicker results={activeTournament?.gameResults || []} />
+                </div>
 
                 <div className="relative z-10 pt-6">
                     {/* Header */}
-                    <div className="bg-brand-blue py-5 border-b border-white/10 sticky top-[152px] z-50 shadow-lg relative overflow-hidden">
+                    <div className="bg-brand-blue py-5 border-b border-white/10 sticky top-[104px] z-50 shadow-lg relative overflow-hidden">
                         {/* Pinned Trophy Icon */}
                         <div className="absolute top-1/2 -translate-y-1/2 -right-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <Trophy className="w-24 h-24 text-white rotate-12" />

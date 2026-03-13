@@ -9,10 +9,9 @@ type GameResultWithTeams = GameResult & {
 }
 
 export function RecentTicker({ results }: { results: GameResultWithTeams[] }) {
-    if (results.length === 0) return null
-
-    // Duplicate results for seamless loop
-    const displayResults = [...results, ...results]
+    // We render the bar even if empty to confirm deployment and provide a smooth layout
+    const hasResults = results.length > 0
+    const displayResults = hasResults ? [...results, ...results] : []
 
     return (
         <div className="bg-gray-900 border-b border-white/10 overflow-hidden relative group">
@@ -26,7 +25,7 @@ export function RecentTicker({ results }: { results: GameResultWithTeams[] }) {
                 </div>
 
                 <div className="flex items-center gap-6 animate-scroll hover:[animation-play-state:paused]">
-                    {displayResults.map((game, idx) => {
+                    {hasResults ? displayResults.map((game, idx) => {
                         const points = calculateGamePoints(game);
                         return (
                             <div key={`${game.id}-${idx}`} className="inline-flex items-center gap-4 bg-white/5 hover:bg-white/10 transition-colors rounded-full pl-3 pr-4 py-1.5 border border-white/10">
@@ -44,7 +43,16 @@ export function RecentTicker({ results }: { results: GameResultWithTeams[] }) {
                                 </div>
                             </div>
                         );
-                    })}
+                    }) : (
+                        <div className="flex items-center gap-4 px-4 py-1.5">
+                            <span className="text-xs text-gray-500 font-medium tracking-wide">Waiting for first game results to be recorded...</span>
+                            <div className="flex gap-2">
+                                <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse"></div>
+                                <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse delay-75"></div>
+                                <div className="w-2 h-2 rounded-full bg-gray-800 animate-pulse delay-150"></div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -76,15 +76,13 @@ export default async function GroupDashboardPage({ params }: { params: Promise<{
             <div className="fixed top-0 left-0 w-full h-96 bg-gradient-to-b from-brand-blue to-[#F3F4F6] z-0 opacity-10 pointer-events-none"></div>
 
             {/* Ticker (connected to bottom of main site header) */}
-            {group.tournament.gameResults.length > 0 && (
-                <div className="sticky top-[80px] z-[60] shadow-md border-b border-white/10">
-                    <RecentTicker results={group.tournament.gameResults} />
-                </div>
-            )}
+            <div className="sticky top-[64px] z-[60] shadow-md border-b border-white/10">
+                <RecentTicker results={group.tournament.gameResults || []} />
+            </div>
 
             <div className="relative z-10 pt-6">
                 {/* Header */}
-                <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-[152px] z-50">
+                <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-[104px] z-50">
                     <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <Link href="/admin/groups" className="text-gray-400 hover:text-gray-700 transition-colors">
