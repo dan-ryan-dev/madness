@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { BaseLayout } from "@/components/layout/BaseLayout";
+
 import { Navbar } from "@/components/layout/Navbar";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -49,7 +49,7 @@ export default function RootLayout({
       >
         <div className="min-h-screen bg-brand-light flex flex-col font-sans">
           <Navbar />
-          <main className="flex-grow">
+          <main className="flex-grow container mx-auto p-4 md:p-6">
             {children}
           </main>
           <footer className="bg-brand-dark text-white p-4 text-center text-sm">
