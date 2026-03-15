@@ -97,7 +97,7 @@ export async function Navbar() {
                             </Link>
                         </div>
                     )}
-                    <MobileNav myGroupId={myGroupId} isAdmin={isAdmin} />
+                    <MobileNav myGroupId={myGroupId} isAdmin={isAdmin} isAuthenticated={!!session} />
                 </div>
             </div>
         </nav>

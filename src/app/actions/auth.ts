@@ -1,6 +1,6 @@
 "use server"
 
-import { auth } from "@/auth"
+import { auth, signOut } from "@/auth"
 import prisma from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { createTransport } from "nodemailer"
@@ -163,4 +163,8 @@ export async function updateProfile(prevState: any, formData: FormData) {
         console.error("Update profile error:", error)
         return { success: false, message: "Failed to update profile." }
     }
+}
+
+export async function handleSignOut() {
+    await signOut()
 }

@@ -4,12 +4,15 @@ import { useState } from "react"
 import Link from "next/link"
 import { Menu, X, Trophy, ChartBar, Shield, Star } from "lucide-react"
 
+import { SignOut } from "@/components/auth/SignOut"
+
 interface MobileNavProps {
     myGroupId: string | null | undefined
     isAdmin: boolean
+    isAuthenticated: boolean
 }
 
-export function MobileNav({ myGroupId, isAdmin }: MobileNavProps) {
+export function MobileNav({ myGroupId, isAdmin, isAuthenticated }: MobileNavProps) {
     const [isOpen, setIsOpen] = useState(false)
 
     return (
@@ -59,6 +62,22 @@ export function MobileNav({ myGroupId, isAdmin }: MobileNavProps) {
                             Admin Console
                         </Link>
                     )}
+
+                    <div className="border-t border-white/10 pt-4 mt-2">
+                        {isAuthenticated ? (
+                            <div className="text-white hover:text-brand-orange font-bold -ml-4">
+                                <SignOut />
+                            </div>
+                        ) : (
+                            <Link
+                                href="/api/auth/signin"
+                                className="flex items-center gap-2 text-brand-orange hover:text-white py-2 font-bold uppercase tracking-wider"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Sign In
+                            </Link>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

@@ -27,14 +27,15 @@ export const LeaderboardCard = ({ members }: { members: MemberWithUser[] }) => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto flex-1">
-                <table className="w-full text-left">
+            <div className="relative group/scroll flex-1">
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200">
+                    <table className="w-full text-left min-w-[500px] lg:min-w-0">
                     <thead>
                         <tr className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            <th className="px-6 py-3">Rank</th>
-                            <th className="px-6 py-3">Player</th>
-                            <th className="px-6 py-3 text-center">Alive</th>
-                            <th className="px-6 py-3 text-right">Score</th>
+                            <th className="px-3 sm:px-6 py-3 text-center">Rank</th>
+                            <th className="px-3 sm:px-6 py-3">Player</th>
+                            <th className="px-3 sm:px-6 py-3 text-center">Alive</th>
+                            <th className="px-3 sm:px-6 py-3 text-right">Score</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100/50">
@@ -43,14 +44,14 @@ export const LeaderboardCard = ({ members }: { members: MemberWithUser[] }) => {
                                 key={member.id}
                                 className={`hover:bg-white/40 transition-colors ${index < 3 ? 'bg-gradient-to-r from-orange-50/30 to-transparent' : ''}`}
                             >
-                                <td className="px-6 py-4">
+                                <td className="px-3 sm:px-6 py-4">
                                     <div className="flex items-center justify-center">
-                                        <span className={`font-mono font-bold text-lg ${index < 3 ? 'text-gray-900' : 'text-gray-400 opacity-50'}`}>
+                                        <span className={`font-mono font-bold text-lg sm:text-xl ${index < 3 ? 'text-gray-900' : 'text-gray-400 opacity-50'}`}>
                                             {member.rank}
                                         </span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-3 sm:px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${index === 0 ? 'bg-brand-orange text-white' : 'bg-gray-100 text-gray-600'}`}>
                                             {member.user.name?.[0] || "U"}
@@ -65,16 +66,16 @@ export const LeaderboardCard = ({ members }: { members: MemberWithUser[] }) => {
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-3 sm:px-6 py-4 text-center">
                                     <div className="inline-flex items-center gap-1.5 bg-gray-100 px-2 py-1 rounded-full border border-gray-200">
-                                        <span className={`text-sm font-bold ${member.teamsAlive === 0 ? 'text-red-600' : 'text-gray-900'}`}>{member.teamsAlive}</span>
-                                        <span className="text-xs text-gray-400">/</span>
-                                        <span className="text-xs text-gray-500">{member.totalTeams}</span>
+                                        <span className={`text-xs sm:text-sm font-bold ${member.teamsAlive === 0 ? 'text-red-600' : 'text-gray-900'}`}>{member.teamsAlive}</span>
+                                        <span className="text-[10px] sm:text-xs text-gray-400">/</span>
+                                        <span className="text-[10px] sm:text-xs text-gray-500">{member.totalTeams}</span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-3 sm:px-6 py-4 text-right">
                                     <div className="flex flex-col items-end">
-                                        <span className="text-2xl font-black text-brand-blue leading-none">{member.score}</span>
+                                        <span className="text-xl sm:text-2xl font-black text-brand-blue leading-none">{member.score}</span>
                                         {member.finalScoreGuess ? (
                                             <div className={`text-[9px] font-black uppercase tracking-tighter mt-1 ${members.filter(m => m.score === member.score).length > 1
                                                 ? 'text-brand-orange bg-orange-50 px-1.5 py-0.5 rounded border border-brand-orange/10'
@@ -92,17 +93,19 @@ export const LeaderboardCard = ({ members }: { members: MemberWithUser[] }) => {
                     </tbody>
                     <tfoot className="border-t-2 border-brand-blue/10 bg-brand-blue/5">
                         <tr>
-                            <td className="px-6 py-4 font-bold text-brand-blue uppercase tracking-wider text-xs" colSpan={3}>
+                            <td className="px-3 sm:px-6 py-4 font-bold text-brand-blue uppercase tracking-wider text-xs" colSpan={3}>
                                 Group Total
                             </td>
-                            <td className="px-6 py-4 text-right">
-                                <span className="text-2xl font-black text-brand-blue">
+                            <td className="px-3 sm:px-6 py-4 text-right">
+                                <span className="text-xl sm:text-2xl font-black text-brand-blue">
                                     {members.reduce((acc, m) => acc + m.score, 0)}
                                 </span>
                             </td>
                         </tr>
                     </tfoot>
                 </table>
+                </div>
+                <div className="lg:hidden pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent opacity-50"></div>
             </div>
         </div>
     )
