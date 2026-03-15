@@ -64,9 +64,7 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
             return { success: false, message: "Session expired or user record missing. Please sign out and sign back in." }
         }
 
-        const emailTasks: Array<{ email: string, magicLink: string, name: string, isExisting: boolean }> = []
-
-        const group = await prisma.$transaction(async (tx) => {
+        const txResult = await prisma.$transaction(async (tx) => {
             // 1. Create Group (Admin is owner)
             const group = await tx.group.create({
                 data: {
@@ -75,6 +73,8 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                     adminId: session.user.id,
                 }
             })
+
+            const playersToEmail: Array<{ email: string, name: string, isExisting: boolean }> = []
 
             // 2. Process Players (All 8)
             for (let i = 0; i < players.length; i++) {
@@ -107,23 +107,31 @@ export async function createGroupWithPlayers(prevState: any, formData: FormData)
                     }
                 })
 
-                // 3. Generate Magic Link using standardized helper
-                const { magicLink } = await generateMagicLink(player.email)
-
                 // Don't email the admin if they created the group
                 if (user.email !== session.user.email) {
-                    emailTasks.push({
+                    playersToEmail.push({
                         email: player.email,
-                        magicLink,
                         name: player.name,
                         isExisting
                     })
                 }
             }
-            return group
+            return { group, playersToEmail }
+        }, {
+            timeout: 15000, 
+            maxWait: 15000
         })
 
-        // 4. Send Emails in PARALLEL to prevent timeout
+        const group = txResult.group
+
+        // 3. Generate Magic Links OUTSIDE the transaction to prevent database lock timeouts
+        const emailTasks: Array<{ email: string, magicLink: string, name: string, isExisting: boolean }> = []
+        for (const pt of txResult.playersToEmail) {
+            const { magicLink } = await generateMagicLink(pt.email)
+            emailTasks.push({ ...pt, magicLink })
+        }
+
+        // 4. Send Emails in PARALLEL to prevent serverless function timeout
         const displayTournamentName = tournament.name || "Madness 2026";
         await Promise.allSettled(emailTasks.map(async (task) => {
             const subject = task.isExisting
