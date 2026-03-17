@@ -364,11 +364,12 @@ export async function saveTieBreaker(groupId: string, finalScoreGuess: number, n
     // If targetUserId is provided, check if the session user is an admin
     let userIdToUpdate = session.user.id
     if (targetUserId && targetUserId !== session.user.id) {
-        const adminMembership = await prisma.groupMembership.findUnique({
-            where: { userId_groupId: { userId: session.user.id as string, groupId: groupId } }
+        const targetGroup = await prisma.group.findUnique({
+            where: { id: groupId },
+            select: { adminId: true }
         })
         const isSuperAdmin = session.user.role === "SUPER_ADMIN"
-        const isGroupAdmin = adminMembership?.role === "ADMIN"
+        const isGroupAdmin = targetGroup?.adminId === session.user.id
 
         if (!isSuperAdmin && !isGroupAdmin) {
             return { success: false, message: "Unauthorized: Only admins can save tie-breakers for others." }

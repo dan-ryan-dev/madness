@@ -22,7 +22,10 @@ export async function Navbar() {
             if (session?.user?.id && process.env.DATABASE_URL) {
                 const membership = await prisma.groupMembership.findFirst({
                     where: { userId: session.user.id },
-                    orderBy: { joinedAt: 'asc' }
+                    orderBy: [
+                        { group: { tournament: { year: 'desc' } } },
+                        { joinedAt: 'desc' }
+                    ]
                 });
                 myGroupId = membership?.groupId;
             }
