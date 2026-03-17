@@ -297,6 +297,14 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
                                         </div>
                                         <div className="sm:hidden pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent opacity-50"></div>
                                     </div>
+                                    <div className="border-t border-gray-100 bg-gray-50/60 px-6 py-3 text-center">
+                                        <Link
+                                            href={`/leaderboard/global${activeTournamentId ? `?tournamentId=${activeTournamentId}` : ''}`}
+                                            className="text-xs text-gray-400 hover:text-brand-blue transition-colors font-medium italic"
+                                        >
+                                            😬 Curious how far down the list goes? See the full standings →
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
 
