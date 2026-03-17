@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react"
 import { inviteManagers } from "@/app/actions/admin"
 import { Loader2, CheckCircle, CheckCircle2, AlertCircle, Eye, Mail, ArrowRight, UserPlus, Info, Copy, Check } from "lucide-react"
-import { getBaseUrl } from "@/lib/utils"
 import Link from "next/link"
 
 export function ManagerInvitationForm({ tournamentId }: { tournamentId: string }) {
@@ -71,7 +70,7 @@ export function ManagerInvitationForm({ tournamentId }: { tournamentId: string }
     }
 
     const copyInstructions = (inv: { email: string, tempPassword: string }) => {
-        const text = `Hi! You've been set up as a manager for Madness 2026.\n\nSign in here: ${getBaseUrl()}/auth/login\nEmail: ${inv.email}\nTemp Password: ${inv.tempPassword}\n\nPlease change your password after logging in!`
+        const text = `Hi! You've been set up as a manager for Madness 2026.\n\nSign in here: ${window.location.origin}/auth/login\nEmail: ${inv.email}\nTemp Password: ${inv.tempPassword}\n\nPlease change your password after logging in!`
         navigator.clipboard.writeText(text)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
