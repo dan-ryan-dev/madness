@@ -150,9 +150,18 @@ export default async function GroupDashboardPage({ params }: { params: Promise<{
                                                         {member.draftPosition}
                                                     </span>
                                                 </div>
-                                                <h3 className={`font-bold truncate max-w-[140px] ${isMe ? 'text-brand-blue' : 'text-gray-900'}`}>
-                                                    {member.user.name}
-                                                </h3>
+                                                <div className="flex flex-col">
+                                                    <h3 className={`font-bold truncate max-w-[140px] ${isMe ? 'text-brand-blue' : 'text-gray-900'}`}>
+                                                        {member.user.name}
+                                                    </h3>
+                                                    {member.nitWinnerGuess && member.finalScoreGuess ? (
+                                                        <span className="text-[10px] text-gray-400 font-medium leading-tight">
+                                                            🏆 {member.nitWinnerGuess} · {member.finalScoreGuess}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] text-gray-300 italic leading-tight">No tiebreaker</span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <span className="font-mono font-bold text-lg text-gray-900">{member.score}</span>
                                         </div>
