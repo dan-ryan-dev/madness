@@ -13,9 +13,22 @@ export default async function GlobalLeaderboardPage({ searchParams }: { searchPa
     const { filterGroupId, tournamentId } = await searchParams
     const isSuperAdmin = session?.user?.role === "SUPER_ADMIN"
 
-    // 1. Fetch Tournaments for Filter (Super Admin sees all, Others see only LIVE)
+    // 1. Fetch Tournaments for Filter
+    // Super Admin sees all; others see any tournament they have a group membership in
+    // (We intentionally ignore tournament status this year since the workflow is not fully enforced)
     const availableTournaments = await prisma.tournament.findMany({
-        where: isSuperAdmin ? {} : { status: "LIVE" },
+        where: isSuperAdmin ? {} : {
+            OR: [
+                { status: "LIVE" },
+                ...(session?.user?.id ? [{
+                    groups: {
+                        some: {
+                            memberships: { some: { userId: session.user.id } }
+                        }
+                    }
+                }] : [])
+            ]
+        },
         orderBy: { year: 'desc' },
         select: { id: true, name: true, year: true, status: true }
     })
@@ -39,7 +52,8 @@ export default async function GlobalLeaderboardPage({ searchParams }: { searchPa
     } else if (activeTournamentId) {
         where.group = { tournamentId: activeTournamentId }
     } else {
-        where.group = { tournament: { status: "LIVE" } }
+        // No tournament filter at all — show all data across all active tournaments
+        where.group = {}
     }
 
     // 2. Fetch all groups for filter (Scoped to tournament)

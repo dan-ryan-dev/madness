@@ -137,9 +137,10 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
         }
 
         // 5. Fetch Global Top 50 (For the full standings view)
+        // Intentionally not filtering by tournament status this year — use tournamentId if available
         const globalTop50 = await prisma.groupMembership.findMany({
             where: {
-                ...(activeTournamentId ? { group: { tournamentId: activeTournamentId } } : { group: { tournament: { status: "LIVE" } } }),
+                ...(activeTournamentId ? { group: { tournamentId: activeTournamentId } } : {}),
                 ...(filterGroupId ? { groupId: filterGroupId } : {})
             },
             orderBy: { score: 'desc' },
